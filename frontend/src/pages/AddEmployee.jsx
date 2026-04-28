@@ -243,12 +243,22 @@ export default function AddEmployee() {
             </button>
           </div>
 
-          <div className="flex items-center gap-4 text-gray-500">
+          <div className="flex items-center gap-3 text-gray-500">
             <button className="hidden sm:flex"><BellIcon /></button>
             <button className="hidden sm:flex"><HelpCircleIcon /></button>
             <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-bold">
               {getInitials(companyName)}
             </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("companyName");
+                navigate("/auth");
+              }}
+              className="px-3 py-1.5 text-sm font-semibold text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition"
+            >
+              Sign Out
+            </button>
           </div>
         </header>
 

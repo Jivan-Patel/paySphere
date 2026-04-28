@@ -350,12 +350,29 @@ export default function MonthlyUpdates() {
               borderBottom:"2px solid #2563EB", paddingBottom:2,
             }} className="sm:flex">April 2026 <ChevronDown /></button>
           </div>
-          <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <button style={{ background:"none", border:"none", cursor:"pointer", display:"flex" }}><BellIcon /></button>
             <button style={{ background:"none", border:"none", cursor:"pointer", display:"flex" }}><HelpCircleIcon /></button>
             <div style={{ width:34, height:34, borderRadius:"50%", background:"#1E3A5F", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"white", cursor:"pointer" }}>
               {getCompInitials(companyName)}
             </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("companyName");
+                navigate("/auth");
+              }}
+              style={{
+                padding:"6px 12px", fontSize:13, fontWeight:600,
+                color:"#EF4444", border:"1px solid #FECACA", borderRadius:8,
+                background:"transparent", cursor:"pointer", fontFamily:"'DM Sans',sans-serif",
+                transition:"background 0.15s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background="#FEF2F2"}
+              onMouseLeave={e => e.currentTarget.style.background="transparent"}
+            >
+              Sign Out
+            </button>
           </div>
         </header>
 
