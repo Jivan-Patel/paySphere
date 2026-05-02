@@ -11,6 +11,7 @@ app.use(express.json());
 app.use(cors());
 
 // Routes
+app.get("/", (req, res) => res.send("PaySphere API is running..."));
 app.use("/api/auth", userRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/payroll", payrollRoutes);
