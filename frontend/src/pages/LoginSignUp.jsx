@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import API_BASE_URL from "../utils/api";
 import { Helmet } from "react-helmet-async";
+import { useGoogleLogin} from "@react-oauth/google";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 48 48">
@@ -58,6 +59,47 @@ export default function PaySphereLogin() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      setError("");
+      try {
+        const payload = { 
+          accessToken: tokenResponse.access_token 
+        };
+        
+        if (activeTab === "signup") {
+          payload.companyName = companyName;
+        }
+
+        const response = await axios.post(`${API_BASE_URL}/api/auth/google`, payload);
+        
+        if (response.status === 202 && response.data.needsCompanyName) {
+          setError(response.data.message);
+          setActiveTab("signup");
+        } else {
+          const { token, companyName: savedCompanyName } = response.data;
+          localStorage.setItem("token", token);
+          localStorage.setItem("companyName", savedCompanyName);
+          navigate("/dashboard");
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || "Google Login failed.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => setError("Google Login failed.")
+  });
+
+  const onGoogleClick = () => {
+    if (activeTab === "signup" && !companyName) {
+      setError("Please enter your Company Name to sign up with Google.");
+      return;
+    }
+    handleGoogleLogin();
   };
 
   return (
@@ -171,7 +213,11 @@ export default function PaySphereLogin() {
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
 
-                <button className="w-full border border-gray-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:shadow">
+                <button 
+                  onClick={onGoogleClick}
+                  disabled={loading}
+                  className="w-full border border-gray-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:shadow disabled:opacity-50"
+                >
                   <GoogleIcon />
                   Sign in with Google
                 </button>
@@ -238,7 +284,11 @@ export default function PaySphereLogin() {
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
 
-                <button className="w-full border border-gray-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:shadow">
+                <button 
+                  onClick={onGoogleClick}
+                  disabled={loading}
+                  className="w-full border border-gray-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:shadow disabled:opacity-50"
+                >
                   <GoogleIcon />
                   Sign Up with Google
                 </button>

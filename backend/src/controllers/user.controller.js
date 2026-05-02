@@ -1,6 +1,10 @@
+const axios = require("axios");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/user.model");
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // SIGN UP
 exports.signup = async (req, res) => {
@@ -83,5 +87,63 @@ exports.updateSettings = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+// GOOGLE AUTH
+exports.googleAuth = async (req, res) => {
+  try {
+    const { credential, accessToken, companyName } = req.body;
+    let googleData;
+
+    if (credential) {
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      googleData = ticket.getPayload();
+    } else if (accessToken) {
+      const response = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+      googleData = response.data;
+    } else {
+      return res.status(400).json({ message: "No Google credentials provided" });
+    }
+
+    const { sub: googleId, email, name, picture } = googleData;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      if (!companyName) {
+        return res.status(202).json({ 
+          message: "Account doesn't exist. Please provide a company name to sign up.",
+          needsCompanyName: true 
+        });
+      }
+
+      user = new User({
+        fullName: name,
+        email,
+        companyName,
+        googleId: googleId || googleData.sub,
+        avatar: picture || googleData.picture,
+      });
+
+      await user.save();
+    } else if (!user.googleId) {
+      user.googleId = googleId || googleData.sub;
+      user.avatar = picture || googleData.picture;
+      await user.save();
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.status(200).json({ 
+      token, 
+      companyName: user.companyName,
+      message: user.isNew ? "Account created successfully" : "Logged in successfully"
+    });
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    res.status(500).json({ message: "Google auth failed", error: error.message });
   }
 };
