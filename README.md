@@ -10,169 +10,122 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-18-61dafb?style=flat-square&logo=react" alt="React" />
-  <img src="https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=nodedotjs" alt="Node.js" />
-  <img src="https://img.shields.io/badge/MongoDB-Atlas-47a248?style=flat-square&logo=mongodb" alt="MongoDB" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-v4-06b6d4?style=flat-square&logo=tailwindcss" alt="Tailwind" />
+  <a href="https://www.figma.com/proto/v7oAom74sFxLaaf0JO8UvI/Untitled?node-id=501-1971&viewport=16164%2C15242%2C0.12&t=n1yfHauC6Rlr6HhY-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=501%3A1971&page-id=11%3A29"><b>Figma Design</b></a> •
+  <a href="https://paysphere-dev-patel.vercel.app/"><b>Live Project</b></a> •
+  <a href="https://documenter.getpostman.com/view/50839751/2sBXqKofJr"><b>Postman Documentation</b></a> •
+  <a href="https://paysphere-p0nt.onrender.com"><b>Backend API</b></a> •
+  <a href="https://youtu.be/N3SizOsiNGw"><b>YouTube Demo</b></a>
 </p>
-
----
-
-## 🎨 UI/UX Philosophy
-
-Figma Prototype : [Figma](https://www.figma.com/proto/v7oAom74sFxLaaf0JO8UvI/Untitled?node-id=501-1971&viewport=16164%2C15242%2C0.12&t=n1yfHauC6Rlr6HhY-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=501%3A1971&page-id=11%3A29)
-
----
-
-## ✨ What is PaySphere?
-
-PaySphere follows a **"Digital Ledger"** design philosophy — minimal UI, clear structure, fast interactions, zero unnecessary complexity. Inspired by the simplicity of **Notion** and the polish of **Stripe**.
-
-> **Built for small teams** — not enterprise HR departments. Add your employees, log updates through a chat-style interface, and run payroll in one click.
 
 ---
 
 ## ❗ Problem Statement
 
-Small businesses employing fewer than 10 workers spend hours every month
-manually calculating salaries --- factoring in:
-
--   Paid leave
--   Unpaid absences
--   Overtime hours
--   Festival bonuses
+Small businesses employing fewer than 10 workers spend hours every month manually calculating salaries factoring in paid leave, unpaid absences, overtime hours, and festival bonuses. 
 
 Most payroll software is built for **large enterprises**, making them:
-- Too complex
-- Too expensive
-- Not optimized for tiny teams
+- Too complex for tiny teams.
+- Expensive and over-engineered.
+- Not optimized for the fast-paced "Digital Ledger" style of Bharat.
 
-👉 Result: **Wasted time, calculation errors, and frustration**
+👉 Result: **Wasted time, calculation errors, and frustration.**
 
 ---
 
 ## 💡 Solution
 
 PaySphere simplifies payroll into a **3-step workflow**:
-
-1.  👥 Add employees
-2.  💬 Log updates via
-3.  ⚡ Run payroll instantly
-
+1. 👥 **Add Employees**: Quickly onboard your team with base salary and overtime rates.
+2. 💬 **Log Updates**: Add leaves, overtime, and bonuses through a clean, intuitive interface.
+3. ⚡ **Run Payroll**: Generate professional payslips and finalize payouts in one click.
 
 ---
 
 ## 🎯 Features
 
 | Feature | Description |
-|---------|-------------|
-| 👥 **Employee Dashboard** | Card-based grid view with name, role, salary & status at a glance |
-| 💬 **Chat-style Updates** | Add leaves, overtime, bonuses & deductions through a messaging-like interface |
-| ⚡ **One-click Payroll** | Calculate salaries for all active employees instantly |
-| 📄 **PDF Payslips** | Download professional payslips with full salary breakdowns |
-| 🔐 **Authentication** | JWT-based signup/login with protected routes |
-| 📱 **Responsive Design** | Works seamlessly on desktop, tablet & mobile |
+| :--- | :--- |
+| 🔐 **Google Authentication** | Secure Login & Signup with Google One-Tap integration. |
+| 👥 **Employee Management** | Dashboard view with status, role, and salary at a glance. |
+| 💬 **Activity Tracking** | Log leave, overtime, bonuses, and deductions per employee. |
+| ⚡ **Instant Payroll** | Automated calculation of Net Salary based on monthly activity. |
+| 📄 **Professional Payslips** | Download detailed PDF breakdowns for each payout. |
+| 📱 **Responsive Design** | Fully optimized for Mobile, Tablet, and Desktop. |
 
 ---
 
 ## 🛠️ Tech Stack
 
 | Layer | Technologies |
-|-------|-------------|
-| **Frontend** | React.js · Tailwind CSS |
-| **Backend** | Node.js · Express.js |
-| **Database** | MongoDB |
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18+)
-- [MongoDB](https://www.mongodb.com/) (local or Atlas)
-
-### 1. Clone & Install
-
-```bash
-# Install backend dependencies
-cd backend
-npm install
-
-# Install frontend dependencies
-cd ../frontend
-npm install
-```
-
-### 2. Configure Environment
-
-Create `backend/.env` with your MongoDB URI:
-
-```env
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_key
-PORT=5000
-```
-
-### 3. Run the App
-
-```bash
-# Terminal 1 — Backend
-cd backend
-npm run dev
-
-# Terminal 2 — Frontend
-cd frontend
-npm run dev
-```
-
-### 4. Open Your Browser
-
-Navigate to **http://localhost:5173**
-
-### 🔑 Demo Login
-
-| Field | Value |
-|-------|-------|
-| Email | `dev@paysphere.com` |
-| Password | `password123` |
+| :--- | :--- |
+| **Frontend** | React.js, Tailwind CSS, @react-oauth/google |
+| **Backend** | Node.js, Express.js, google-auth-library |
+| **Database** | MongoDB Atlas (Mongoose) |
+| **Deployment** | Vercel (Frontend), Render (Backend) |
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 paysphere/
-│
-├── frontend/                     # React frontend (Vite)
+├── backend/
 │   ├── src/
-│   │   ├── components/         # Reusable UI components
-│   │   ├── pages/              # Route pages
-│   ├── index.html
-│   └── vite.config.js
-│
-├── backend/                     # Express backend
-│
+│   │   ├── config/             # Database connection
+│   │   ├── controllers/        # Business logic (Auth, Payroll, Employees)
+│   │   ├── models/             # Mongoose schemas
+│   │   ├── routes/             # API endpoint definitions
+│   │   ├── middlewares/        # JWT & Auth verification
+│   │   └── index.js            # Server entry point
+│   └── package.json
+├── frontend/
+│   ├── public/                 # Static assets (robots.txt, icons)
+│   ├── src/
+│   │   ├── assets/             # Images and local files
+│   │   ├── components/         # UI Components (Sidebar, Navbar, etc.)
+│   │   ├── pages/              # Main route views
+│   │   ├── utils/              # API helpers and constants
+│   │   ├── App.jsx             # Route definitions
+│   │   └── main.jsx            # React root & Context providers
+│   └── package.json
 └── README.md
 ```
 
 ---
 
-## 🧮 Payroll Logic
+## 📸 Screenshots
 
-```
-Net Salary = Base Salary
-             - (Leave Days × Daily Salary)
-             + (Overtime Hours × Hourly Rate × 1.5)
-             + Bonuses
-             - Deductions
+### **Dashboard Overview**
+![PaySphere Dashboard](./frontend/src/assets/dashboard-mockup.png)
+
+---
+
+## 🚀 Installation & Setup
+
+### 1. Backend Configuration
+Create a `.env` in `backend/`:
+```env
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_secret_key
+GOOGLE_CLIENT_ID=your_google_id
+GOOGLE_CLIENT_SECRET=your_google_secret
 ```
 
-| Constant | Value |
-|----------|-------|
-| Working days/month | 26 |
-| Hours/day | 8 |
-| Overtime multiplier | 1.5× |
+### 2. Frontend Configuration
+Create a `.env` in `frontend/`:
+```env
+VITE_API_URL=http://localhost:5000
+VITE_GOOGLE_CLIENT_ID=your_google_id
+```
+
+### 3. Run Development
+```bash
+# Backend
+cd backend && npm run dev
+
+# Frontend
+cd frontend && npm run dev
+```
 
 ---
 
