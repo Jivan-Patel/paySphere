@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import axios from "axios";
-import API_BASE_URL from "../utils/api";
+import api from "../services/api";
+
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const PayrollIcon = () => (
@@ -204,9 +204,8 @@ export default function MonthlyUpdates() {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/employees`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get(`/api/employees`);
+
         setEmployees(res.data.employees);
       } catch (err) {
         console.error("Failed to fetch employees:", err);
@@ -222,9 +221,8 @@ export default function MonthlyUpdates() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/auth/settings`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get(`/api/auth/settings`);
+
         setSettings(res.data);
       } catch (err) {
         console.error("Failed to fetch settings:", err);
@@ -236,9 +234,8 @@ export default function MonthlyUpdates() {
   const saveSettings = async () => {
     setUpdatingSettings(true);
     try {
-      await axios.put(`${API_BASE_URL}/api/auth/settings`, settings, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/api/auth/settings`, settings);
+
       setShowSettings(false);
     } catch (err) {
       alert("Failed to save settings");
@@ -284,14 +281,13 @@ export default function MonthlyUpdates() {
 
     try {
       const now = new Date();
-      const res = await axios.post(
-        `${API_BASE_URL}/api/payroll/finalize`,
+      const res = await api.post(
+        `/api/payroll/finalize`,
         {
           activities: activity.map(a => ({ name: a.name, tags: a.tags })),
           month: now.getMonth() + 1,
           year: now.getFullYear(),
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       );
 
       setPayrollResults(res.data);

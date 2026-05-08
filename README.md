@@ -58,9 +58,8 @@ PaySphere simplifies payroll into a **3-step workflow**:
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Frontend** | React.js, Tailwind CSS, @react-oauth/google |
-| **Backend** | Node.js, Express.js, google-auth-library |
-| **Database** | MongoDB Atlas (Mongoose) |
+| **Frontend** | React.js, Vite, Tailwind CSS v4, MUI (Material UI) |
+| **Backend** | Node.js, Express.js, MongoDB |
 | **Deployment** | Vercel (Frontend), Render (Backend) |
 
 ---
@@ -72,24 +71,25 @@ paysphere/
 ├── backend/
 │   ├── src/
 │   │   ├── config/             # Database connection
-│   │   ├── controllers/        # Business logic (Auth, Payroll, Employees)
+│   │   ├── controllers/        # Business logic
 │   │   ├── models/             # Mongoose schemas
 │   │   ├── routes/             # API endpoint definitions
-│   │   ├── middlewares/        # JWT & Auth verification
 │   │   └── index.js            # Server entry point
-│   └── package.json
 ├── frontend/
-│   ├── public/                 # Static assets (robots.txt, icons)
 │   ├── src/
 │   │   ├── assets/             # Images and local files
-│   │   ├── components/         # UI Components (Sidebar, Navbar, etc.)
+│   │   ├── components/         # Reusable UI Components
+│   │   │   ├── common/         # Button, Input, Modal, etc.
+│   │   │   └── layout/         # Sidebar, Navbar, etc.
 │   │   ├── pages/              # Main route views
-│   │   ├── utils/              # API helpers and constants
+│   │   ├── features/           # Feature-based modules (Auth, Dashboard)
+│   │   ├── hooks/              # Global reusable React hooks
+│   │   ├── services/           # API services (axios config)
+│   │   ├── utils/              # Helper functions and constants
 │   │   ├── App.jsx             # Route definitions
 │   │   └── main.jsx            # React root & Context providers
-│   └── package.json
-└── README.md
 ```
+
 
 ---
 

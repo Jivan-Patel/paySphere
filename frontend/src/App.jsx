@@ -5,6 +5,8 @@ import Dashboard from "./pages/Dashboard"
 import MonthlyUpdates from "./pages/MonthlyUpdates"
 import AddEmployee from "./pages/AddEmployee"
 
+
+
 function App() {
   return (
     <BrowserRouter>
@@ -15,6 +17,8 @@ function App() {
         <Route path="/monthly-updates" element={<MonthlyUpdates />} />
         <Route path="/add-employee" element={<AddEmployee />} />
       </Routes>
+
+
     </BrowserRouter>
   )
 }

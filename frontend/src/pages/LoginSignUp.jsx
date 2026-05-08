@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import axios from "axios";
-import API_BASE_URL from "../utils/api";
+import api from "../services/api";
+
 import { Helmet } from "react-helmet-async";
 import { useGoogleLogin} from "@react-oauth/google";
 
@@ -44,7 +44,7 @@ export default function PaySphereLogin() {
       : { email, password };
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth${endpoint}`, payload);
+      const response = await api.post(`/api/auth${endpoint}`, payload);
       
       const { token, companyName: savedCompanyName } = response.data;
       
@@ -74,7 +74,7 @@ export default function PaySphereLogin() {
           payload.companyName = companyName;
         }
 
-        const response = await axios.post(`${API_BASE_URL}/api/auth/google`, payload);
+        const response = await api.post(`/api/auth/google`, payload);
         
         if (response.status === 202 && response.data.needsCompanyName) {
           setError(response.data.message);

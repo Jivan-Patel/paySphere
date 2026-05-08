@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import axios from "axios";
-import API_BASE_URL from "../utils/api";
+import api from "../services/api";
+
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const GridIcon = () => (
@@ -108,9 +108,8 @@ export default function AddEmployee() {
   useEffect(() => {
     const fetchRecent = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/employees/recent`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get(`/api/employees/recent`);
+
         setRecentEmployees(res.data.employees);
       } catch {
         // silently fail
@@ -126,9 +125,8 @@ export default function AddEmployee() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/auth/settings`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get(`/api/auth/settings`);
+
         setSettings(res.data);
       } catch (err) {
         console.error("Failed to fetch settings:", err);
@@ -140,9 +138,8 @@ export default function AddEmployee() {
   const saveSettings = async () => {
     setUpdatingSettings(true);
     try {
-      await axios.put(`${API_BASE_URL}/api/auth/settings`, settings, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/api/auth/settings`, settings);
+
       setShowSettings(false);
     } catch (err) {
       alert("Failed to save settings");
@@ -158,14 +155,13 @@ export default function AddEmployee() {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        `${API_BASE_URL}/api/employees`,
+      const res = await api.post(
+        `/api/employees`,
         {
           fullName,
           monthlySalary: Number(monthlySalary.replace(/,/g, "")),
           overtimeRate: overtimeRate ? Number(overtimeRate.replace(/,/g, "")) : 0,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       );
 
       setSuccess(`${res.data.employee.fullName} added successfully!`);

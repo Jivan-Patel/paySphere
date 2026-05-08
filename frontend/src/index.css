@@ -1,5 +1,7 @@
+@import "tailwindcss";
+
+@layer mui, base, components, utilities;
+
 html {
   scroll-behavior: smooth;
 }
-
-@import "tailwindcss";
