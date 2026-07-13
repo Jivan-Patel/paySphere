@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import api from "../services/api";
+import { StatCardSkeleton, EmployeeCardSkeleton, EmployeeBreakdownSkeleton } from "../components/common/Skeleton";
 
 
 // --- Dashboard Component ---
@@ -38,21 +39,32 @@ const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpda
 
       {/* Stats */}
       <div className="flex flex-col sm:flex-row gap-4 mb-10">
-        <div className="flex-1 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <p className="text-xs uppercase text-gray-400 font-bold mb-2">
-            Total Monthly Payout
-          </p>
-          <h2 className="text-2xl sm:text-3xl font-bold">₹{totalPayout.toLocaleString("en-IN")}</h2>
-          <p className="text-gray-400 text-sm mt-2">{employeeCount} employees on payroll</p>
-        </div>
+        {loading ? (
+          <>
+            <StatCardSkeleton />
+            <div className="w-full sm:w-64">
+              <StatCardSkeleton />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex-1 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <p className="text-xs uppercase text-gray-400 font-bold mb-2">
+                Total Monthly Payout
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-bold">₹{totalPayout.toLocaleString("en-IN")}</h2>
+              <p className="text-gray-400 text-sm mt-2">{employeeCount} employees on payroll</p>
+            </div>
 
-        <div className="w-full sm:w-64 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <p className="text-xs uppercase text-gray-400 font-bold mb-2">
-            Employees
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold">{employeeCount}</h2>
-          <p className="text-gray-400 text-sm">Active this month</p>
-        </div>
+            <div className="w-full sm:w-64 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <p className="text-xs uppercase text-gray-400 font-bold mb-2">
+                Employees
+              </p>
+              <h2 className="text-3xl sm:text-4xl font-bold">{employeeCount}</h2>
+              <p className="text-gray-400 text-sm">Active this month</p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Search */}
@@ -70,7 +82,9 @@ const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpda
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {loading ? (
-          <div className="col-span-full py-16 text-center text-gray-400 text-sm">Loading employees...</div>
+          Array.from({ length: 6 }).map((_, i) => (
+            <EmployeeCardSkeleton key={i} />
+          ))
         ) : filtered.length === 0 && !search ? (
           <div className="col-span-full py-16 text-center">
             <p className="text-gray-400 text-lg font-semibold mb-2">No employees yet</p>
@@ -207,7 +221,9 @@ const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, pa
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {loading ? (
-          <div className="col-span-full py-16 text-center text-gray-400 text-sm">Loading employees...</div>
+          Array.from({ length: 6 }).map((_, i) => (
+            <EmployeeBreakdownSkeleton key={i} />
+          ))
         ) : employees.length === 0 ? (
           <div className="col-span-full py-16 text-center">
             <p className="text-gray-400 text-lg font-semibold mb-2">No employees yet</p>
