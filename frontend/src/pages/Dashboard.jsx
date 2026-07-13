@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import api from "../services/api";
 import { StatCardSkeleton, EmployeeCardSkeleton, EmployeeBreakdownSkeleton } from "../components/common/Skeleton";
+import EmptyState from "../components/common/EmptyState";
 
 
 // --- Dashboard Component ---
@@ -86,18 +87,23 @@ const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpda
             <EmployeeCardSkeleton key={i} />
           ))
         ) : filtered.length === 0 && !search ? (
-          <div className="col-span-full py-16 text-center">
-            <p className="text-gray-400 text-lg font-semibold mb-2">No employees yet</p>
-            <p className="text-gray-400 text-sm mb-4">Add your first employee to get started with payroll.</p>
-            <button
-              onClick={onAddEmployee}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition"
-            >
-              + Add Employee
-            </button>
-          </div>
+          <EmptyState
+            title="No employees yet"
+            description="Add your first employee to get started with payroll."
+            action={
+              <button
+                onClick={onAddEmployee}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition"
+              >
+                + Add Employee
+              </button>
+            }
+          />
         ) : filtered.length === 0 && search ? (
-          <div className="col-span-full py-16 text-center text-gray-400 text-sm">No employees match "{search}"</div>
+          <EmptyState
+            title="No employees found"
+            description={`No employees match "${search}". Try a different name or role.`}
+          />
         ) : (
           filtered.map((emp) => {
             const p = payrollMap[emp._id];
@@ -225,16 +231,18 @@ const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, pa
             <EmployeeBreakdownSkeleton key={i} />
           ))
         ) : employees.length === 0 ? (
-          <div className="col-span-full py-16 text-center">
-            <p className="text-gray-400 text-lg font-semibold mb-2">No employees yet</p>
-            <p className="text-gray-400 text-sm mb-4">Add employees to see their salary breakdown here.</p>
-            <button
-              onClick={onAddEmployee}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition"
-            >
-              + Add Employee
-            </button>
-          </div>
+          <EmptyState
+            title="No employees yet"
+            description="Add employees to see their salary breakdown here."
+            action={
+              <button
+                onClick={onAddEmployee}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition"
+              >
+                + Add Employee
+              </button>
+            }
+          />
         ) : (
           employees.map(emp => {
             const p = payrollMap[emp._id];
