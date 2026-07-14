@@ -568,7 +568,7 @@ export default function PaySphereDashboard() {
 
         {/* Settings Modal */}
         {showSettings && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifycontent: "center", zIndex: 100, backdropFilter: "blur(4px)" }} onClick={() => setShowSettings(false)}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }} onClick={() => setShowSettings(false)}>
             <div style={{ background: "white", borderRadius: 20, width: "92%", maxWidth: 450, padding: 0, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: "28px 28px 20px", borderBottom: "1.5px solid #F0F1F3" }}>
                 <h2 style={{ fontSize: 24, fontWeight: 700, color: "#111827", margin: 0 }}>Payroll Settings</h2>
