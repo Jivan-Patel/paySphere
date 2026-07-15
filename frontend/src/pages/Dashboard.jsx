@@ -1,3 +1,4 @@
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +29,7 @@ const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpda
             Reports
           </button>
 
-          <button 
+          <button
             onClick={onAddUpdate}
             className="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold"
           >
@@ -145,7 +146,7 @@ const DashboardOverview = ({ search, setSearch, filtered, getInitials, onAddUpda
                 </div>
 
                 {/* Button */}
-                <button 
+                <button
                   onClick={onAddUpdate}
                   className="border border-gray-200 rounded-lg py-2 text-blue-600 font-semibold hover:bg-indigo-50 transition-colors"
                 >
@@ -284,7 +285,33 @@ const EmployeeManagement = ({ employees, loading, onAddEmployee, onAddUpdate, pa
 
                   {p && p.overtimeHours > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-blue-600">+ {p.overtimeHours} hr{p.overtimeHours > 1 ? "s" : ""} overtime</span>
+                      <div className="relative group flex items-center gap-1 text-blue-600">
+                        <span>
+                          + {p.overtimeHours} hr{p.overtimeHours > 1 ? "s" : ""} overtime
+                        </span>
+
+                        <InfoOutlinedIcon
+                          fontSize="inherit"
+                          className="text-sm cursor-help text-blue-500"
+                        />
+
+                        <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-50 w-64 rounded-lg border border-gray-200 bg-white p-3 shadow-xl">
+                          <p className="font-semibold text-gray-800 mb-2">
+                            Overtime Calculation
+                          </p>
+
+                          <div className="space-y-1 text-xs text-gray-600">
+                            <p>Hours Worked: {p.overtimeHours}</p>
+                            <p>Overtime Pay: {fmt(p.overtimePay)}</p>
+                            <p className="font-semibold text-gray-800 mb-2">
+                              Overtime Calculation Formula
+                            </p>
+                            <p>
+                              Overtime Rate × Hours Worked = Overtime Pay
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                       <span className="text-blue-600 font-semibold">+ {fmt(p.overtimePay)}</span>
                     </div>
                   )}
@@ -377,7 +404,8 @@ export default function PaySphereDashboard() {
   const companyName = localStorage.getItem("companyName") || "Acme Corp";
   const token = localStorage.getItem("token");
 
-  // Fetch employees and payroll data from API
+
+  //Fetch employees and payroll data from API
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -457,7 +485,7 @@ export default function PaySphereDashboard() {
 
       {/* Sidebar Backdrop */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -475,7 +503,7 @@ export default function PaySphereDashboard() {
               <p className="text-xs text-gray-400">Payroll ID: 8821</p>
             </div>
           </div>
-          <button 
+          <button
             className="md:hidden p-2 text-gray-400 hover:text-gray-600"
             onClick={() => setIsSidebarOpen(false)}
           >
@@ -495,11 +523,10 @@ export default function PaySphereDashboard() {
                 }
                 setIsSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition ${
-                activePage === item
-                  ? "bg-indigo-50 text-blue-600 font-semibold"
-                  : "text-gray-500 hover:bg-gray-50"
-              }`}
+              className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition ${activePage === item
+                ? "bg-indigo-50 text-blue-600 font-semibold"
+                : "text-gray-500 hover:bg-gray-50"
+                }`}
             >
               {item}
             </button>
@@ -519,7 +546,7 @@ export default function PaySphereDashboard() {
         {/* Topbar */}
         <header className="h-16 bg-white border-b border-gray-200 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4 sm:gap-6">
-            <button 
+            <button
               className="md:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700"
               onClick={() => setIsSidebarOpen(true)}
             >
@@ -550,11 +577,11 @@ export default function PaySphereDashboard() {
 
         {/* Dynamic Content */}
         {activePage === "Dashboard" ? (
-          <DashboardOverview 
-            search={search} 
-            setSearch={setSearch} 
-            filtered={filtered} 
-            getInitials={getInitials} 
+          <DashboardOverview
+            search={search}
+            setSearch={setSearch}
+            filtered={filtered}
+            getInitials={getInitials}
             onAddUpdate={() => navigate("/monthly-updates")}
             onAddEmployee={() => navigate("/add-employee")}
             totalPayout={totalPayout}
@@ -563,7 +590,7 @@ export default function PaySphereDashboard() {
             payrolls={payrolls}
           />
         ) : (
-          <EmployeeManagement employees={employees} loading={loading} onAddEmployee={() => navigate("/add-employee")} onAddUpdate={() => navigate("/monthly-updates")} payrolls={payrolls} currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage}/>
+          <EmployeeManagement employees={employees} loading={loading} onAddEmployee={() => navigate("/add-employee")} onAddUpdate={() => navigate("/monthly-updates")} payrolls={payrolls} currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
         )}
 
         {/* Settings Modal */}
@@ -574,13 +601,13 @@ export default function PaySphereDashboard() {
                 <h2 style={{ fontSize: 24, fontWeight: 700, color: "#111827", margin: 0 }}>Payroll Settings</h2>
                 <p style={{ fontSize: 14, color: "#6B7280", margin: "8px 0 0" }}>Set default rates for all employees.</p>
               </div>
-              
+
               <div style={{ padding: "24px 28px" }}>
                 <label style={{ display: "block", marginBottom: 20 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, display: "block" }}>
                     Default Overtime Rate (₹ / hr)
                   </span>
-                  <input 
+                  <input
                     type="number"
                     value={settings.defaultOvertimeRate}
                     onChange={(e) => setSettings({ ...settings, defaultOvertimeRate: parseFloat(e.target.value) || 0 })}
@@ -592,7 +619,7 @@ export default function PaySphereDashboard() {
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, display: "block" }}>
                     Default Daily Deduction (₹ / day)
                   </span>
-                  <input 
+                  <input
                     type="number"
                     value={settings.defaultDailyRate}
                     onChange={(e) => setSettings({ ...settings, defaultDailyRate: parseFloat(e.target.value) || 0 })}
