@@ -1,3 +1,6 @@
+import { useEffect, useMemo } from "react"
+import { useSelector } from "react-redux"
+import { ThemeProvider, createTheme, CssBaseline } from "@mui/material"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import Landing from "./pages/Landing"
 import LoginSignUp from "./pages/LoginSignUp"
@@ -7,19 +10,47 @@ import AddEmployee from "./pages/AddEmployee"
 import ResetPassword from "./pages/ResetPassword"
 
 function App() {
+  const themeMode = useSelector((state) => state.ui.themeMode);
+
+  // Sync dark class on html document element for Tailwind v4 custom dark variant
+  useEffect(() => {
+    if (themeMode === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [themeMode]);
+
+  // Create MUI theme based on the active theme mode
+  const muiTheme = useMemo(() => {
+    return createTheme({
+      palette: {
+        mode: themeMode,
+        primary: {
+          main: "#3b82f6",
+        },
+        background: {
+          default: themeMode === "dark" ? "#090d16" : "#f3f4f6",
+          paper: themeMode === "dark" ? "#111827" : "#ffffff",
+        },
+      },
+    });
+  }, [themeMode]);
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/auth" element={<LoginSignUp />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/monthly-updates" element={<MonthlyUpdates />} />
-        <Route path="/add-employee" element={<AddEmployee />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-      </Routes>
-
-
-    </BrowserRouter>
+    <ThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/auth" element={<LoginSignUp />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/monthly-updates" element={<MonthlyUpdates />} />
+          <Route path="/add-employee" element={<AddEmployee />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
 import api from "../services/api";
 
 import { Helmet } from "react-helmet-async";
-import { useGoogleLogin} from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
+import ThemeToggle from "../components/ThemeToggle";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 48 48">
@@ -31,7 +31,6 @@ export default function PaySphereLogin() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-
   useEffect(() => {
     const mode = searchParams.get("mode");
     if (mode === "signup" || mode === "login") {
@@ -44,7 +43,6 @@ export default function PaySphereLogin() {
     setSuccessMessage("");
     setIsForgotPassword(false);
   }, [activeTab]);
-
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -91,7 +89,6 @@ export default function PaySphereLogin() {
     }
   };
 
-
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setLoading(true);
@@ -134,54 +131,58 @@ export default function PaySphereLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-gray-100 dark:bg-slate-950 flex flex-col font-sans relative transition-colors duration-200">
       <Helmet>
         <title>{activeTab === "signup" ? "Create Account | PaySphere" : "Login | PaySphere"}</title>
         <meta name="description" content={activeTab === "signup" ? "Join PaySphere and automate your payroll today." : "Login to your PaySphere account to manage your employees."} />
       </Helmet>
-      <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
+      
+      {/* Floating Theme Toggle */}
+      <div className="absolute top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
 
-        <div className="w-full max-w-6xl bg-white rounded-2xl sm:rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden">
+      <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
+        <div className="w-full max-w-6xl bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800/80 rounded-2xl sm:rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden transition-colors">
 
           {/* LEFT PANEL (hidden on mobile) */}
-          <div className="hidden md:flex md:w-[42%] bg-linear-to-br from-indigo-50 via-red-50 to-yellow-100 p-8 lg:p-10 flex-col justify-between relative overflow-hidden">
-
+          <div className="hidden md:flex md:w-[42%] bg-linear-to-br from-indigo-50 via-red-50 to-yellow-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 p-8 lg:p-10 flex-col justify-between relative overflow-hidden">
             <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-blue-500/10" />
             <div className="absolute bottom-24 -left-10 w-40 h-40 rounded-full bg-yellow-400/20" />
 
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-12 lg:mb-16">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg" />
-                <span className="font-bold text-lg text-gray-900">PaySphere</span>
+                <div className="w-8 h-8 bg-blue-600 rounded-lg shadow-sm" />
+                <span className="font-bold text-lg text-gray-900 dark:text-white">PaySphere</span>
               </div>
 
-              <h1 className="text-3xl lg:text-4xl font-serif mb-4 leading-tight">
+              <h1 className="text-3xl lg:text-4xl font-serif text-gray-900 dark:text-white mb-4 leading-tight">
                 Back to <br /> simplicity.
               </h1>
 
-              <p className="text-gray-500 text-sm max-w-xs leading-relaxed">
+              <p className="text-gray-500 dark:text-slate-450 text-sm max-w-xs leading-relaxed">
                 Experience the digital ledger for modern Bharat.
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-4 lg:p-5 shadow-md relative z-10">
-              <p className="text-sm text-gray-500 mb-2">Last Month Payout</p>
-              <h2 className="text-xl lg:text-2xl font-serif text-gray-900">
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 lg:p-5 shadow-md border border-transparent dark:border-slate-800/80 relative z-10">
+              <p className="text-sm text-gray-500 dark:text-slate-400 mb-2">Last Month Payout</p>
+              <h2 className="text-xl lg:text-2xl font-serif text-gray-900 dark:text-white">
                 ₹12,45,000
               </h2>
             </div>
           </div>
 
           {/* RIGHT PANEL */}
-          <div className="w-full md:flex-1 px-5 sm:px-8 md:px-12 py-8 sm:py-10 flex flex-col justify-center">
+          <div className="w-full md:flex-1 px-5 sm:px-8 md:px-12 py-8 sm:py-10 flex flex-col justify-center text-slate-800 dark:text-slate-200">
 
             {/* tabs */}
-            <div className="flex bg-gray-100 rounded-xl p-1 mb-6 sm:mb-8">
+            <div className="flex bg-gray-100 dark:bg-slate-950 rounded-xl p-1 mb-6 sm:mb-8 transition-colors">
               <button
                 onClick={() => setActiveTab("login")}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "login"
-                    ? "bg-white shadow text-gray-900"
-                    : "text-gray-500"
+                    ? "bg-white dark:bg-slate-900 shadow text-gray-900 dark:text-white"
+                    : "text-gray-500 dark:text-slate-450 hover:text-gray-700 dark:hover:text-slate-200"
                   }`}
               >
                 Login
@@ -190,8 +191,8 @@ export default function PaySphereLogin() {
               <button
                 onClick={() => setActiveTab("signup")}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "signup"
-                    ? "bg-white shadow text-gray-900"
-                    : "text-gray-500"
+                    ? "bg-white dark:bg-slate-900 shadow text-gray-900 dark:text-white"
+                    : "text-gray-500 dark:text-slate-450 hover:text-gray-700 dark:hover:text-slate-200"
                   }`}
               >
                 Create Account
@@ -203,8 +204,8 @@ export default function PaySphereLogin() {
               <>
                 {isForgotPassword ? (
                   <>
-                    <h2 className="text-2xl font-serif mb-1">Reset Password</h2>
-                    <p className="text-gray-500 text-sm mb-6">
+                    <h2 className="text-2xl font-serif text-gray-900 dark:text-white mb-1">Reset Password</h2>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
                       Enter your registered email to receive a password reset link.
                     </p>
 
@@ -215,7 +216,7 @@ export default function PaySphereLogin() {
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
                         required
-                        className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 focus:bg-white focus:border focus:border-blue-500 outline-none"
+                        className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 dark:bg-slate-950 text-gray-950 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 border border-transparent dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
                       />
 
                       {error && <p className="text-red-500 text-xs mb-4">{error}</p>}
@@ -238,7 +239,7 @@ export default function PaySphereLogin() {
                           setError("");
                           setSuccessMessage("");
                         }}
-                        className="text-sm text-blue-600 hover:underline font-semibold"
+                        className="text-sm text-blue-600 dark:text-blue-450 hover:underline font-semibold"
                       >
                         Back to Login
                       </button>
@@ -246,8 +247,8 @@ export default function PaySphereLogin() {
                   </>
                 ) : (
                   <>
-                    <h2 className="text-2xl font-serif mb-1">Welcome back</h2>
-                    <p className="text-gray-500 text-sm mb-6">
+                    <h2 className="text-2xl font-serif text-gray-900 dark:text-white mb-1">Welcome back</h2>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
                       Enter your credentials
                     </p>
 
@@ -258,7 +259,7 @@ export default function PaySphereLogin() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 focus:bg-white focus:border focus:border-blue-500 outline-none"
+                        className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 dark:bg-slate-950 text-gray-955 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 border border-transparent dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
                       />
 
                       <input
@@ -267,7 +268,7 @@ export default function PaySphereLogin() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 focus:bg-white focus:border focus:border-blue-500 outline-none"
+                        className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 dark:bg-slate-950 text-gray-955 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 border border-transparent dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
                       />
 
                       <div className="flex justify-end mb-4 -mt-2">
@@ -278,7 +279,7 @@ export default function PaySphereLogin() {
                             setError("");
                             setSuccessMessage("");
                           }}
-                          className="text-xs text-blue-600 hover:underline font-semibold"
+                          className="text-xs text-blue-600 dark:text-blue-450 hover:underline font-semibold"
                         >
                           Forgot Password?
                         </button>
@@ -298,17 +299,17 @@ export default function PaySphereLogin() {
                 )}
 
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="flex-1 h-px bg-gray-200" />
-                  <span className="text-xs text-gray-400 font-semibold">
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-slate-800" />
+                  <span className="text-xs text-gray-400 dark:text-slate-400 font-semibold">
                     OR
                   </span>
-                  <div className="flex-1 h-px bg-gray-200" />
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-slate-800" />
                 </div>
 
                 <button 
                   onClick={onGoogleClick}
                   disabled={loading}
-                  className="w-full border border-gray-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:shadow disabled:opacity-50"
+                  className="w-full border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-850 hover:shadow transition disabled:opacity-50"
                 >
                   <GoogleIcon />
                   Sign in with Google
@@ -316,9 +317,12 @@ export default function PaySphereLogin() {
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-serif mb-1">
+                <h2 className="text-2xl font-serif text-gray-900 dark:text-white mb-1">
                   Create your account
                 </h2>
+                <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
+                  Set up your company roster
+                </p>
 
                 <form onSubmit={handleAuth}>
                   <input
@@ -327,7 +331,7 @@ export default function PaySphereLogin() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
-                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 focus:bg-white focus:border focus:border-blue-500 outline-none"
+                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 dark:bg-slate-950 text-gray-955 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 border border-transparent dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
                   />
 
                   <input
@@ -336,7 +340,7 @@ export default function PaySphereLogin() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 focus:bg-white focus:border focus:border-blue-500 outline-none"
+                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 dark:bg-slate-950 text-gray-955 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 border border-transparent dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
                   />
 
                   <input
@@ -345,7 +349,7 @@ export default function PaySphereLogin() {
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     required
-                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 focus:bg-white focus:border focus:border-blue-500 outline-none"
+                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 dark:bg-slate-950 text-gray-955 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 border border-transparent dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
                   />
 
                   <input
@@ -354,7 +358,7 @@ export default function PaySphereLogin() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 focus:bg-white focus:border focus:border-blue-500 outline-none"
+                    className="w-full mb-4 px-4 py-3 rounded-lg bg-gray-100 dark:bg-slate-950 text-gray-955 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 border border-transparent dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
                   />
 
                   {error && <p className="text-red-500 text-xs mb-4">{error}</p>}
@@ -369,17 +373,17 @@ export default function PaySphereLogin() {
                 </form>
 
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="flex-1 h-px bg-gray-200" />
-                  <span className="text-xs text-gray-400 font-semibold">
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-slate-800" />
+                  <span className="text-xs text-gray-400 dark:text-slate-400 font-semibold">
                     OR
                   </span>
-                  <div className="flex-1 h-px bg-gray-200" />
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-slate-800" />
                 </div>
 
                 <button 
                   onClick={onGoogleClick}
                   disabled={loading}
-                  className="w-full border border-gray-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:shadow disabled:opacity-50"
+                  className="w-full border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-850 hover:shadow transition disabled:opacity-50"
                 >
                   <GoogleIcon />
                   Sign Up with Google
