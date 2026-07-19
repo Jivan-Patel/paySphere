@@ -167,7 +167,7 @@ exports.forgotPassword = async (req, res) => {
     const resetToken = crypto.randomBytes(20).toString("hex");
     
     // Set token and expiry (1 hour)
-    user.resetPasswordToken = resetToken;
+    user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
     user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
 
@@ -211,8 +211,10 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: "New password is required" });
     }
 
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
     const user = await User.findOne({
-      resetPasswordToken: token,
+      resetPasswordToken: hashedToken,
       resetPasswordExpires: { $gt: Date.now() },
     });
 
