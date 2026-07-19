@@ -34,11 +34,10 @@ exports.finalizePayroll = async (req, res) => {
     const errors = [];
 
     for (const act of activities) {
-      // Match activity name to an employee (case-insensitive partial match)
+      // Match activity precisely by employeeId (if provided) or by exact name
       const employee = employees.find(emp =>
-        emp.fullName.toLowerCase() === act.name.toLowerCase() ||
-        emp.fullName.toLowerCase().includes(act.name.toLowerCase()) ||
-        act.name.toLowerCase().includes(emp.fullName.toLowerCase())
+        (act.employeeId && emp._id.toString() === String(act.employeeId)) ||
+        (act.name && emp.fullName.toLowerCase() === act.name.toLowerCase())
       );
 
       if (!employee) {
