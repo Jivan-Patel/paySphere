@@ -147,3 +147,32 @@ exports.getPayrollSummary = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+const { sendPayslipEmail } = require("../services/email.service");
+
+// SEND PAYSLIP EMAIL manually
+exports.sendPayslipEmailHandler = async (req, res) => {
+  try {
+    const payrollId = req.params.id;
+    const payroll = await PayrollUpdate.findOne({ _id: payrollId, createdBy: req.userId });
+    
+    if (!payroll) {
+      return res.status(404).json({ message: "Payroll record not found" });
+    }
+
+    const employee = await Employee.findById(payroll.employeeId);
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    if (!employee.email) {
+      return res.status(400).json({ message: "Employee does not have an email address set" });
+    }
+
+    await sendPayslipEmail(employee, payroll);
+    res.status(200).json({ message: "Payslip email sent successfully" });
+  } catch (error) {
+    console.error("Manual email error:", error);
+    res.status(500).json({ message: "Server error while sending email", error: error.message });
+  }
+};
