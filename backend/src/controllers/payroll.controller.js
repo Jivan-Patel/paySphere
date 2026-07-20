@@ -1,6 +1,7 @@
 const Employee = require("../models/employee.model");
 const PayrollUpdate = require("../models/payroll.model");
 const User = require("../models/user.model");
+const { calculateNetSalary } = require("../utils/salaryCalculator");
 
 // Helper: parse tag labels back into structured numbers
 function parseTagValue(label) {
@@ -64,17 +65,12 @@ exports.finalizePayroll = async (req, res) => {
       }
 
       // Calculate salary adjustments
-      const baseSalary = employee.monthlySalary;
-      
-      // Use user default daily rate if available, otherwise fallback to salary/30
-      const dailyRate = (user && user.defaultDailyRate) || (baseSalary / 30);
-      const leaveDeduction = Math.round(dailyRate * leaveDays);
-      
-      // Use employee's overtime rate if set, otherwise use user default, otherwise 0
-      const overtimeRate = employee.overtimeRate || (user && user.defaultOvertimeRate) || 0;
-      const overtimePay = Math.round(overtimeRate * overtimeHours);
-      
-      const netSalary = baseSalary - leaveDeduction + overtimePay + bonus - deductions;
+      const {
+        baseSalary,
+        leaveDeduction,
+        overtimePay,
+        netSalary
+      } = calculateNetSalary(employee, user, { leaveDays, overtimeHours, bonus, deductions });
 
       // Upsert payroll record (update if exists for same employee/month)
       const payrollData = {
