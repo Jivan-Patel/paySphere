@@ -180,7 +180,7 @@ export default function PaySphereLogin() {
             <div className="flex bg-gray-100 dark:bg-slate-950 rounded-xl p-1 mb-6 sm:mb-8 transition-colors">
               <button
                 onClick={() => setActiveTab("login")}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "login"
+                className={`flex-1 py-2 cursor-pointer rounded-lg text-sm font-medium transition ${activeTab === "login"
                     ? "bg-white dark:bg-slate-900 shadow text-gray-900 dark:text-white"
                     : "text-gray-500 dark:text-slate-450 hover:text-gray-700 dark:hover:text-slate-200"
                   }`}
@@ -190,7 +190,7 @@ export default function PaySphereLogin() {
 
               <button
                 onClick={() => setActiveTab("signup")}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "signup"
+                className={`flex-1 py-2 cursor-pointer rounded-lg text-sm font-medium transition ${activeTab === "signup"
                     ? "bg-white dark:bg-slate-900 shadow text-gray-900 dark:text-white"
                     : "text-gray-500 dark:text-slate-450 hover:text-gray-700 dark:hover:text-slate-200"
                   }`}
@@ -279,7 +279,7 @@ export default function PaySphereLogin() {
                             setError("");
                             setSuccessMessage("");
                           }}
-                          className="text-xs text-blue-600 dark:text-blue-450 hover:underline font-semibold"
+                          className="text-xs cursor-pointer text-blue-600 dark:text-blue-450 hover:underline font-semibold"
                         >
                           Forgot Password?
                         </button>
@@ -290,7 +290,7 @@ export default function PaySphereLogin() {
                       <button 
                         type="submit" 
                         disabled={loading}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition mb-5 text-center disabled:opacity-50"
+                        className="w-full bg-blue-600 cursor-pointer hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition mb-5 text-center disabled:opacity-50"
                       >
                         {loading ? "Logging in..." : "Login"}
                       </button>
@@ -309,7 +309,7 @@ export default function PaySphereLogin() {
                 <button 
                   onClick={onGoogleClick}
                   disabled={loading}
-                  className="w-full border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-850 hover:shadow transition disabled:opacity-50"
+                  className="w-full border cursor-pointer border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-850 hover:shadow transition disabled:opacity-50"
                 >
                   <GoogleIcon />
                   Sign in with Google
@@ -366,7 +366,7 @@ export default function PaySphereLogin() {
                   <button 
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition mb-5 text-center disabled:opacity-50"
+                    className="w-full bg-blue-600 cursor-pointer hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition mb-5 text-center disabled:opacity-50"
                   >
                     {loading ? "Creating Account..." : "Create Account"}
                   </button>
@@ -383,7 +383,7 @@ export default function PaySphereLogin() {
                 <button 
                   onClick={onGoogleClick}
                   disabled={loading}
-                  className="w-full border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-850 hover:shadow transition disabled:opacity-50"
+                  className="w-full border cursor-pointer border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-200 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-850 hover:shadow transition disabled:opacity-50"
                 >
                   <GoogleIcon />
                   Sign Up with Google

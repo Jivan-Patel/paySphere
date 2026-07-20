@@ -61,13 +61,13 @@ const DashboardOverview = ({
         </div>
 
         <div className="flex gap-3 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none px-5 py-2.5 border border-gray-200 dark:border-slate-800 dark:text-slate-200 rounded-lg text-sm font-semibold hover:shadow dark:hover:bg-slate-800 transition-colors">
+          <button className="flex-1 cursor-pointer sm:flex-none px-5 py-2.5 border border-gray-200 dark:border-slate-800 dark:text-slate-200 rounded-lg text-sm font-semibold hover:shadow dark:hover:bg-slate-800 transition-colors">
             Reports
           </button>
 
           <button
             onClick={onAddUpdate}
-            className="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-md shadow-blue-200 dark:shadow-none"
+            className="flex-1 cursor-pointer sm:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-md shadow-blue-200 dark:shadow-none"
           >
             Run Payroll
           </button>
@@ -120,7 +120,7 @@ const DashboardOverview = ({
             type="button"
             onClick={handleCloseBtn}
             aria-label="Dismiss tutorial"
-            className="absolute right-4 top-4 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="absolute right-4 top-4 cursor-pointer rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
             ✕
           </button>
@@ -172,7 +172,7 @@ const DashboardOverview = ({
             action={
               <button
                 onClick={onAddEmployee}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none"
+                className="px-6 py-2.5 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none"
               >
                 + Add Employee
               </button>
@@ -345,12 +345,12 @@ const EmployeeManagement = ({
         <div className="flex gap-3 w-full sm:w-auto">
           <button
             onClick={onAddUpdate}
-            className="flex-1 sm:flex-none px-5 py-3 border border-gray-200 dark:border-slate-800 rounded-xl font-semibold text-gray-700 dark:text-slate-200 hover:shadow dark:hover:bg-slate-800 transition-colors"
+            className="flex-1 sm:flex-none cursor-pointer px-5 py-3 border border-gray-200 dark:border-slate-800 rounded-xl font-semibold text-gray-700 dark:text-slate-200 hover:shadow dark:hover:bg-slate-800 transition-colors"
           >
             Edit Updates
           </button>
 
-          <button className="flex-1 sm:flex-none px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-200 dark:shadow-none">
+          <button className="flex-1 sm:flex-none cursor-pointer px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-200 dark:shadow-none">
             Finish & Pay
           </button>
         </div>
@@ -707,7 +707,7 @@ export default function PaySphereDashboard() {
                 }
                 setIsSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition ${
+              className={`w-full flex cursor-pointer items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition ${
                 activePage === item
                   ? 'bg-indigo-50 dark:bg-indigo-950/30 text-blue-600 dark:text-blue-400 font-semibold'
                   : 'text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50'
@@ -721,7 +721,7 @@ export default function PaySphereDashboard() {
         <div className="p-3 border-t border-gray-200 dark:border-slate-800 space-y-2">
           <button
             onClick={() => navigate('/monthly-updates')}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-200 dark:shadow-none"
+            className="w-full cursor-pointer py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-200 dark:shadow-none"
           >
             Run Payroll
           </button>
@@ -758,7 +758,7 @@ export default function PaySphereDashboard() {
                 localStorage.removeItem('companyName');
                 navigate('/');
               }}
-              className="px-3 py-1.5 text-sm font-semibold text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/50 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition"
+              className="px-3 py-1.5 cursor-pointer text-sm font-semibold text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/50 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition"
             >
               Sign Out
             </button>
