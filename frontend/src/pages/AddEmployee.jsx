@@ -568,7 +568,7 @@ export default function AddEmployee() {
               </div>
 
               {/* Speed Tip Card */}
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800 via-gray-900 to-gray-950 p-6 text-white shadow-lg">
+              <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-gray-800 via-gray-900 to-gray-950 p-6 text-white shadow-lg">
                 {/* Decorative circles */}
                 <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/5" />
                 <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-white/5" />
