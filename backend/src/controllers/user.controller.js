@@ -10,15 +10,13 @@ const { sendEmail } = require("../utils/email");
 const { isNonEmptyString, isValidEmail } = require("../utils/validators");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
 // SIGN UP
 exports.signup = async (req, res) => {
   try {
     const { fullName, email, companyName, password } = req.body;
 
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$/;
-    if (!password || !passwordRegex.test(password)) {
-      return res.status(400).json({ message: "Password must be at least 8 characters long, include at least one uppercase letter, one number, and one special character." });
     if (!isNonEmptyString(fullName) || !isNonEmptyString(email) || !isNonEmptyString(companyName) || !isNonEmptyString(password)) {
       return res.status(400).json({ message: "Full name, email, company name, and password are required non-empty strings" });
     }
@@ -27,8 +25,8 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ message: "Invalid email address format" });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters long" });
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ message: "Password must be at least 8 characters, contain at least one uppercase letter, one number, and one special character" });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -317,11 +315,8 @@ exports.resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$/;
-    if (!password || !passwordRegex.test(password)) {
-      return res.status(400).json({ message: "Password must be at least 8 characters long, include at least one uppercase letter, one number, and one special character." });
-    if (!isNonEmptyString(password) || password.length < 6) {
-      return res.status(400).json({ message: "New password must be a string with at least 6 characters" });
+    if (!isNonEmptyString(password) || !passwordRegex.test(password)) {
+      return res.status(400).json({ message: "Password must be at least 8 characters, contain at least one uppercase letter, one number, and one special character" });
     }
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
