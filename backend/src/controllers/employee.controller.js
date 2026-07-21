@@ -58,6 +58,9 @@ exports.getEmployees = async (req, res) => {
     if (typeof search !== "string") search = "";
     search = search.trim();
 
+    // Escape regex special characters to prevent ReDoS attacks (#121)
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
     const skip = (page - 1) * limit;
 
     const query = {
@@ -65,9 +68,10 @@ exports.getEmployees = async (req, res) => {
     };
 
     if (search) {
+      const safeSearch = escapeRegex(search);
       query.$or = [
-        { fullName: { $regex: search, $options: "i" } },
-        { role: { $regex: search, $options: "i" } },
+        { fullName: { $regex: safeSearch, $options: "i" } },
+        { role: { $regex: safeSearch, $options: "i" } },
       ];
     }
 
