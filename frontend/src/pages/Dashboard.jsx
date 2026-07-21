@@ -1,9 +1,11 @@
 import DownloadIcon from '@mui/icons-material/Download';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
+import Sidebar from '../components/Sidebar';
+import EmployeeCard from '../components/EmployeeCard';
+import SettingsModal from '../components/SettingsModal';
 import EmptyState from '../components/common/EmptyState';
 import {
   EmployeeBreakdownSkeleton,
@@ -38,12 +40,11 @@ const downloadFile = (url, filename) => {
     });
 };
 
-// --- Dashboard Component ---
+// --- Dashboard Overview Component ---
 const DashboardOverview = ({
   search,
   setSearch,
   filtered,
-  getInitials,
   onAddUpdate,
   onAddEmployee,
   totalPayout,
@@ -51,13 +52,11 @@ const DashboardOverview = ({
   loading,
   payrolls,
 }) => {
-  // Build a map from employeeId to payroll data
   const payrollMap = {};
   (payrolls || []).forEach((p) => {
     payrollMap[p.employeeId] = p;
   });
 
-  const fmt = (n) => '₹' + Math.abs(n).toLocaleString('en-IN');
   const [gettingStarted, setGettingStarted] = useState(() => {
     return localStorage.getItem('showGettingStartedCard') !== 'false';
   });
@@ -116,36 +115,23 @@ const DashboardOverview = ({
         ) : (
           <>
             <div className="flex-1 bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
-              <p className="text-xs uppercase text-gray-400 dark:text-slate-400 font-bold mb-2">
-                Total Monthly Payout
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-                ₹{totalPayout.toLocaleString('en-IN')}
-              </h2>
-              <p className="text-gray-400 dark:text-slate-400 text-sm mt-2">
-                {employeeCount} employees on payroll
-              </p>
+              <p className="text-xs uppercase text-gray-400 dark:text-slate-400 font-bold mb-2">Total Monthly Payout</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">₹{totalPayout.toLocaleString('en-IN')}</h2>
+              <p className="text-gray-400 dark:text-slate-400 text-sm mt-2">{employeeCount} employees on payroll</p>
             </div>
 
             <div className="w-full sm:w-64 bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
-              <p className="text-xs uppercase text-gray-400 dark:text-slate-400 font-bold mb-2">
-                Employees
-              </p>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
-                {employeeCount}
-              </h2>
-              <p className="text-gray-400 dark:text-slate-400 text-sm">
-                Active this month
-              </p>
+              <p className="text-xs uppercase text-gray-400 dark:text-slate-400 font-bold mb-2">Employees</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">{employeeCount}</h2>
+              <p className="text-gray-400 dark:text-slate-400 text-sm">Active this month</p>
             </div>
           </>
         )}
       </div>
 
-      {/*Getting Started*/}
+      {/* Getting Started */}
       {gettingStarted && (
         <div className="relative mx-auto my-8 max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-md dark:border-slate-800 dark:bg-slate-900">
-          {/* Close Button */}
           <button
             type="button"
             onClick={handleCloseBtn}
@@ -155,14 +141,8 @@ const DashboardOverview = ({
             ✕
           </button>
 
-          <h2 className="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">
-            Getting Started
-          </h2>
-
-          <p className="text-gray-600 dark:text-slate-400">
-            New to PaySphere? Watch this quick tutorial to learn how to navigate
-            the application and get started.
-          </p>
+          <h2 className="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">Getting Started</h2>
+          <p className="text-gray-600 dark:text-slate-400">New to PaySphere? Watch this quick tutorial to learn how to navigate the application and get started.</p>
 
           <a
             href="https://youtu.be/N3SizOsiNGw"
@@ -177,9 +157,7 @@ const DashboardOverview = ({
 
       {/* Search + Export Roster */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-          Employee Directory
-        </h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Employee Directory</h2>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <input
@@ -192,16 +170,8 @@ const DashboardOverview = ({
           <button
             type="button"
             disabled={loading || filtered.length === 0}
-            onClick={() =>
-              exportEmployeesToCsv(filtered, {
-                companyName: localStorage.getItem('companyName') || 'PaySphere',
-              })
-            }
-            title={
-              filtered.length === 0
-                ? 'No employees to export'
-                : `Export ${filtered.length} employee${filtered.length === 1 ? '' : 's'} to CSV`
-            }
+            onClick={() => exportEmployeesToCsv(filtered, { companyName: localStorage.getItem('companyName') || 'PaySphere' })}
+            title={filtered.length === 0 ? 'No employees to export' : `Export ${filtered.length} employee${filtered.length === 1 ? '' : 's'} to CSV`}
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-500 rounded-lg text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-950/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent transition-colors"
           >
             <DownloadIcon sx={{ fontSize: 18 }} />
@@ -213,108 +183,37 @@ const DashboardOverview = ({
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <EmployeeCardSkeleton key={i} />
-          ))
+          Array.from({ length: 6 }).map((_, i) => <EmployeeCardSkeleton key={i} />)
         ) : filtered.length === 0 && !search ? (
           <EmptyState
             title="No employees yet"
             description="Add your first employee to get started with payroll."
             action={
-              <button
-                onClick={onAddEmployee}
-                className="px-6 py-2.5 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none"
-              >
+              <button onClick={onAddEmployee} className="px-6 py-2.5 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none">
                 + Add Employee
               </button>
             }
           />
         ) : filtered.length === 0 && search ? (
-          <EmptyState
-            title="No employees found"
-            description={`No employees match "${search}". Try a different name or role.`}
-          />
+          <EmptyState title="No employees found" description={`No employees match "${search}". Try a different name or role.`} />
         ) : (
-          filtered.map((emp) => {
-            const p = payrollMap[emp._id];
-            return (
-              <div
-                key={emp._id}
-                className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-md transition flex flex-col gap-4 duration-200"
-              >
-                {/* Header */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold"
-                      style={{
-                        backgroundColor:
-                          AVATAR_COLORS[
-                          emp.fullName
-                            .split('')
-                            .reduce((a, c) => a + c.charCodeAt(0), 0) %
-                          AVATAR_COLORS.length
-                          ],
-                      }}
-                    >
-                      {getInitials(emp.fullName)}
-                    </div>
-
-                    <div>
-                      <p className="font-bold text-sm text-slate-900 dark:text-white">
-                        {emp.fullName}
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-slate-400">
-                        {emp.role || 'Employee'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <span
-                    className={`text-xs font-bold px-2 py-1 rounded-md border ${p ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/50' : 'bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-900/50'}`}
-                  >
-                    {p ? 'Finalized' : 'Pending'}
-                  </span>
-                </div>
-
-                {/* Salary */}
-                <div className="bg-gray-50 dark:bg-slate-950 p-3 rounded-lg transition-colors">
-                  <div className="flex justify-between items-baseline">
-                    <p className="text-xs text-gray-400 dark:text-slate-400 uppercase">
-                      {p ? 'Net Salary' : 'Base Salary'}
-                    </p>
-                    {p && (p.leaveDays > 0 || p.overtimeHours > 0) && (
-                      <span className="text-[10px] text-gray-400 dark:text-slate-400 font-medium">
-                        Incl. adjustments
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">
-                    {fmt(p ? p.netSalary : emp.monthlySalary)}
-                  </p>
-                </div>
-
-                {/* Button */}
-                <button
-                  onClick={onAddUpdate}
-                  className="border border-gray-200 dark:border-slate-800 rounded-lg py-2 text-blue-600 dark:text-blue-400 font-semibold hover:bg-indigo-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  {p ? 'Edit Updates' : '+ Add Update'}
-                </button>
-              </div>
-            );
-          })
+          filtered.map((emp) => (
+            <EmployeeCard
+              key={emp._id}
+              emp={emp}
+              payroll={payrollMap[emp._id]}
+              variant="overview"
+              onAddUpdate={onAddUpdate}
+            />
+          ))
         )}
 
-        {/* Add Card - only show when we have employees or not loading */}
         {!loading && (filtered.length > 0 || search) && (
           <div
             onClick={onAddEmployee}
             className="border-2 border-dashed border-gray-300 dark:border-slate-800 rounded-xl flex items-center justify-center min-h-44 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-indigo-50/50 dark:hover:bg-slate-900/50 cursor-pointer transition duration-200"
           >
-            <p className="text-gray-400 dark:text-slate-400 font-semibold">
-              + Add Employee
-            </p>
+            <p className="text-gray-400 dark:text-slate-400 font-semibold">+ Add Employee</p>
           </div>
         )}
       </div>
@@ -322,19 +221,7 @@ const DashboardOverview = ({
   );
 };
 
-// --- Avatar Colors ---
-const AVATAR_COLORS = [
-  '#6366F1',
-  '#EC4899',
-  '#F59E0B',
-  '#10B981',
-  '#3B82F6',
-  '#8B5CF6',
-  '#EF4444',
-  '#14B8A6',
-];
-
-// --- Employees Component ---
+// --- Employee Management Component ---
 const EmployeeManagement = ({
   employees,
   loading,
@@ -347,7 +234,6 @@ const EmployeeManagement = ({
   onDeleteEmployee,
 }) => {
   const fmt = (n) => '₹' + Math.abs(n).toLocaleString('en-IN');
-  // Build a map from employeeId to payroll data
   const payrollMap = {};
   (payrolls || []).forEach((p) => {
     payrollMap[p.employeeId] = p;
@@ -358,14 +244,6 @@ const EmployeeManagement = ({
     return s + (p ? p.netSalary : e.monthlySalary || 0);
   }, 0);
 
-  const initials = (name) =>
-    name
-      .split(' ')
-      .map((w) => w[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-
   return (
     <main className="p-4 sm:p-8">
       {/* Summary */}
@@ -374,15 +252,8 @@ const EmployeeManagement = ({
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50 mb-4">
             Payroll done in 30 seconds
           </span>
-
-          <p className="text-sm text-gray-400 dark:text-slate-400 mb-1">
-            Final Summary
-          </p>
-
-          <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 dark:text-white mb-2">
-            ₹{totalNet.toLocaleString('en-IN')}
-          </h1>
-
+          <p className="text-sm text-gray-400 dark:text-slate-400 mb-1">Final Summary</p>
+          <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 dark:text-white mb-2">₹{totalNet.toLocaleString('en-IN')}</h1>
           <p className="text-sm text-gray-400 dark:text-slate-400">
             Total Monthly Payout for{' '}
             <span className="text-gray-700 dark:text-slate-200 font-semibold">
@@ -398,7 +269,6 @@ const EmployeeManagement = ({
           >
             Edit Updates
           </button>
-
           <button className="flex-1 sm:flex-none cursor-pointer px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-200 dark:shadow-none">
             Finish & Pay
           </button>
@@ -408,175 +278,35 @@ const EmployeeManagement = ({
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <EmployeeBreakdownSkeleton key={i} />
-          ))
+          Array.from({ length: 6 }).map((_, i) => <EmployeeBreakdownSkeleton key={i} />)
         ) : employees.length === 0 ? (
           <EmptyState
             title="No employees yet"
             description="Add employees to see their salary breakdown here."
             action={
-              <button
-                onClick={onAddEmployee}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none"
-              >
+              <button onClick={onAddEmployee} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-md shadow-blue-200 dark:shadow-none">
                 + Add Employee
               </button>
             }
           />
         ) : (
-          employees.map((emp) => {
-            const p = payrollMap[emp._id];
-
-            return (
-              <div
-                key={emp._id}
-                className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-md transition duration-200"
-              >
-                {/* Header */}
-                <div className="flex justify-between items-center mb-5">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-11 h-11 rounded-full text-white flex items-center justify-center font-bold"
-                      style={{
-                        backgroundColor:
-                          AVATAR_COLORS[
-                          emp.fullName
-                            .split('')
-                            .reduce((a, c) => a + c.charCodeAt(0), 0) %
-                          AVATAR_COLORS.length
-                          ],
-                      }}
-                    >
-                      {initials(emp.fullName)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm text-gray-900 dark:text-white">
-                        {emp.fullName}
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-slate-400">
-                        {emp.role || 'Employee'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <span
-                    className={`text-xs font-bold px-2 py-1 rounded-md border ${p ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/50' : 'bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-900/50'}`}
-                  >
-                    {p ? 'Finalized' : 'Pending'}
-                  </span>
-                </div>
-
-                {/* Breakdown */}
-                <div className="space-y-2 text-sm mb-5 text-slate-700 dark:text-slate-300">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-slate-400">
-                      Base Salary
-                    </span>
-                    <span className="font-semibold text-gray-950 dark:text-white">
-                      {fmt(emp.monthlySalary)}
-                    </span>
-                  </div>
-
-                  {p && p.leaveDays > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-red-600 dark:text-red-400">
-                        − {p.leaveDays} day{p.leaveDays > 1 ? 's' : ''} leave
-                      </span>
-                      <span className="text-red-600 dark:text-red-400 font-semibold">
-                        - {fmt(p.leaveDeduction)}
-                      </span>
-                    </div>
-                  )}
-
-                  {p && p.overtimeHours > 0 && (
-                    <div className="flex justify-between">
-                      <div className="relative group flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                        <span className="cursor-pointer">
-                          + {p.overtimeHours} hr{p.overtimeHours > 1 ? 's' : ''}{' '}
-                          overtime
-                        </span>
-
-                        <InfoOutlinedIcon
-                          fontSize="inherit"
-                          className="text-sm cursor-help text-blue-500 dark:text-blue-400"
-                        />
-
-                        <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-50 w-64 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 shadow-xl text-slate-800 dark:text-slate-200">
-                          <p className="font-semibold text-gray-800 dark:text-white mb-2">
-                            Overtime Calculation
-                          </p>
-
-                          <div className="space-y-1 text-xs text-gray-600 dark:text-slate-400">
-                            <p>Hours Worked: {p.overtimeHours}</p>
-                            <p>Overtime Pay: {fmt(p.overtimePay)}</p>
-                            <p className="font-semibold text-gray-800 dark:text-white mt-2 mb-1">
-                              Formula
-                            </p>
-                            <p>Overtime Rate × Hours Worked</p>
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-blue-600 dark:text-blue-400 font-semibold">
-                        + {fmt(p.overtimePay)}
-                      </span>
-                    </div>
-                  )}
-
-                  {p && p.bonus > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-green-600 dark:text-green-400">
-                        + Bonus
-                      </span>
-                      <span className="text-green-600 dark:text-green-400 font-semibold">
-                        + {fmt(p.bonus)}
-                      </span>
-                    </div>
-                  )}
-
-                  {p && p.deductions > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-red-600 dark:text-red-400">
-                        − Deductions
-                      </span>
-                      <span className="text-red-600 dark:text-red-400 font-semibold">
-                        - {fmt(p.deductions)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="h-px bg-gray-200 dark:bg-slate-800 mb-4" />
-
-                {/* Net */}
-                <div className="flex justify-between items-center">
-                  <span className="text-xs uppercase text-gray-400 dark:text-slate-400 font-bold">
-                    {p ? 'Net Salary' : 'Monthly Salary'}
-                  </span>
-                  <span className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
-                    {fmt(p ? p.netSalary : emp.monthlySalary)}
-                  </span>
-                </div>
-                <button
-                  onClick={() => onDeleteEmployee(emp)}
-                  className="mt-4 w-full py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400"
-                >
-                  Delete Employee
-                </button>
-              </div>
-            );
-          })
+          employees.map((emp) => (
+            <EmployeeCard
+              key={emp._id}
+              emp={emp}
+              payroll={payrollMap[emp._id]}
+              variant="breakdown"
+              onDeleteEmployee={onDeleteEmployee}
+            />
+          ))
         )}
 
-        {/* Add More */}
         {!loading && employees.length > 0 && (
           <div
             onClick={onAddEmployee}
             className="border-2 border-dashed border-gray-300 dark:border-slate-800 rounded-xl flex items-center justify-center min-h-48 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-indigo-50/50 dark:hover:bg-slate-900/50 cursor-pointer transition duration-200"
           >
-            <p className="text-gray-400 dark:text-slate-400 font-semibold">
-              + Add more employees
-            </p>
+            <p className="text-gray-400 dark:text-slate-400 font-semibold">+ Add more employees</p>
           </div>
         )}
       </div>
@@ -591,11 +321,9 @@ const EmployeeManagement = ({
           >
             Previous
           </button>
-
           <span className="text-sm text-gray-600 dark:text-slate-400">
             Page {currentPage} of {totalPages}
           </span>
-
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(currentPage + 1)}
@@ -613,6 +341,7 @@ export default function PaySphereDashboard() {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('Dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -624,7 +353,6 @@ export default function PaySphereDashboard() {
   const companyName = localStorage.getItem('companyName') || 'Acme Corp';
   const token = localStorage.getItem('token');
 
-  //Fetch employees and payroll data from API
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -700,81 +428,19 @@ export default function PaySphereDashboard() {
     <div className="min-h-screen bg-gray-100 dark:bg-slate-950 flex font-sans text-slate-800 dark:text-slate-200 transition-colors duration-200">
       <Helmet>
         <title>
-          {activePage === 'Dashboard'
-            ? 'Payroll Dashboard | PaySphere'
-            : 'Employee Management | PaySphere'}
+          {activePage === 'Dashboard' ? 'Payroll Dashboard | PaySphere' : 'Employee Management | PaySphere'}
         </title>
-        <meta
-          name="description"
-          content={`Manage ${companyName}'s payroll and employees with ease.`}
-        />
+        <meta name="description" content={`Manage ${companyName}'s payroll and employees with ease.`} />
       </Helmet>
 
-      {/* Sidebar Backdrop */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`w-56 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 fixed inset-y-0 left-0 flex flex-col z-50 transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
-      >
-        <div className="p-5 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 dark:shadow-none">
-              ₹
-            </div>
-            <div>
-              <p className="font-bold text-sm text-gray-900 dark:text-white">
-                {companyName}
-              </p>
-              <p className="text-xs text-gray-400 dark:text-slate-500">
-                Payroll ID: 8821
-              </p>
-            </div>
-          </div>
-          <button
-            className="md:hidden p-2 text-gray-400 hover:text-gray-600"
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            ✕
-          </button>
-        </div>
-
-        <nav className="flex-1 p-3 space-y-1">
-          {['Dashboard', 'Employees', 'Settings'].map((item) => (
-            <button
-              key={item}
-              onClick={() => {
-                if (item === 'Settings') {
-                  navigate('/settings');
-                } else {
-                  setActivePage(item);
-                }
-                setIsSidebarOpen(false);
-              }}
-              className={`w-full flex cursor-pointer items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition ${activePage === item
-                  ? 'bg-indigo-50 dark:bg-indigo-950/30 text-blue-600 dark:text-blue-400 font-semibold'
-                  : 'text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50'
-                }`}
-            >
-              {item}
-            </button>
-          ))}
-        </nav>
-
-        <div className="p-3 border-t border-gray-200 dark:border-slate-800 space-y-2">
-          <button
-            onClick={() => navigate('/monthly-updates')}
-            className="w-full cursor-pointer py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-200 dark:shadow-none"
-          >
-            Run Payroll
-          </button>
-        </div>
-      </aside>
+      {/* Sidebar (extracted component) */}
+      <Sidebar
+        companyName={companyName}
+        activePage={activePage}
+        setActivePage={setActivePage}
+        isSidebarOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* Main */}
       <div className="flex-1 flex flex-col md:ml-56 transition-all duration-300">
@@ -787,9 +453,7 @@ export default function PaySphereDashboard() {
             >
               ☰
             </button>
-            <span className="font-bold text-blue-900 dark:text-blue-400 truncate">
-              Ledger Payroll
-            </span>
+            <span className="font-bold text-blue-900 dark:text-blue-400 truncate">Ledger Payroll</span>
             <button className="hidden sm:block text-blue-600 dark:text-blue-400 font-semibold border-b-2 border-blue-600 dark:border-blue-400 pb-0.5 whitespace-nowrap">
               {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
             </button>
@@ -819,7 +483,6 @@ export default function PaySphereDashboard() {
             search={search}
             setSearch={setSearch}
             filtered={filtered}
-            getInitials={getInitials}
             onAddUpdate={() => navigate('/monthly-updates')}
             onAddEmployee={() => navigate('/add-employee')}
             totalPayout={totalPayout}
@@ -840,6 +503,7 @@ export default function PaySphereDashboard() {
             onDeleteEmployee={(emp) => setEmployeeToDelete(emp)}
           />
         )}
+
 
         {/* Delete Confirmation Modal */}
         {employeeToDelete && (
@@ -884,8 +548,14 @@ export default function PaySphereDashboard() {
 
           </div>
         )}
-
       </div>
+
+      {/* Settings modal (extracted component).
+          Kept for future use; not wired to a trigger today, so
+          no visual change occurs. */}
+      <SettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}>
+        <p className="text-sm text-gray-500 dark:text-slate-400">Settings will be available here soon.</p>
+      </SettingsModal>
     </div>
   );
 }
