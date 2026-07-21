@@ -201,3 +201,67 @@ exports.importEmployees = async (req, res) => {
     });
   }
 };
+
+// UPDATE EMPLOYEE
+exports.updateEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fullName, role, monthlySalary, overtimeRate } = req.body;
+
+    const employee = await Employee.findById(id);
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    // Ensure the logged-in user is the creator of this employee
+    if (employee.createdBy.toString() !== req.userId) {
+      return res.status(403).json({ message: "Not authorized to update this employee" });
+    }
+
+    // Validate fields if provided
+    if (monthlySalary !== undefined && (isNaN(monthlySalary) || monthlySalary <= 0)) {
+      return res.status(400).json({ message: "Monthly salary must be a positive number" });
+    }
+
+    if (overtimeRate !== undefined && (isNaN(overtimeRate) || overtimeRate < 0)) {
+      return res.status(400).json({ message: "Overtime rate must be a non-negative number" });
+    }
+
+    // Apply updates only for provided fields
+    if (fullName !== undefined) employee.fullName = fullName;
+    if (role !== undefined) employee.role = role;
+    if (monthlySalary !== undefined) employee.monthlySalary = monthlySalary;
+    if (overtimeRate !== undefined) employee.overtimeRate = overtimeRate;
+
+    await employee.save();
+
+    res.status(200).json({ message: "Employee updated successfully", employee });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// DELETE EMPLOYEE
+exports.deleteEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const employee = await Employee.findById(id);
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    // Ensure the logged-in user is the creator of this employee
+    if (employee.createdBy.toString() !== req.userId) {
+      return res.status(403).json({ message: "Not authorized to delete this employee" });
+    }
+
+    await Employee.findByIdAndDelete(id);
+
+    res.status(200).json({ message: "Employee deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
