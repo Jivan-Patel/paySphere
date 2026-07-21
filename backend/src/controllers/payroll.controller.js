@@ -172,6 +172,9 @@ exports.exportPayrollCSV = async (req, res) => {
     res.status(200).send(csvData);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 const { sendPayslipEmail } = require("../services/email.service");
 
 // SEND PAYSLIP EMAIL manually
