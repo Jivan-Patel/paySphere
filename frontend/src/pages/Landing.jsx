@@ -3,6 +3,7 @@ import Hero from "../components/Hero"
 import Dashboard from "../components/Dashboard"
 import Steps from "../components/Steps"
 import FAQS from "../components/FAQS"
+import Contributors from "../components/Contributors"
 import Footer from "../components/Footer"
 import { Helmet } from "react-helmet-async";
 
@@ -18,6 +19,7 @@ export default function Landing() {
       <Dashboard />
       <Steps />
       <FAQS />
+      <Contributors />
       <Footer />
     </div>
   )
