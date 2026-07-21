@@ -1,4 +1,5 @@
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import DownloadIcon from '@mui/icons-material/Download';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,7 @@ import {
   StatCardSkeleton,
 } from '../components/common/Skeleton';
 import api from '../services/api';
+import { exportEmployeesToCsv } from '../utils/exportEmployeesToCsv';
 
 // Trigger a file download from the browser
 const downloadFile = (url, filename) => {
@@ -174,18 +176,39 @@ const DashboardOverview = ({
         </div>
       )}
 
-      {/* Search */}
+      {/* Search + Export Roster */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">
           Employee Directory
         </h2>
 
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search employees..."
-          className="w-full sm:w-auto px-4 py-2 border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg text-sm focus:border-blue-500 outline-none transition-colors"
-        />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search employees..."
+            className="w-full sm:w-auto px-4 py-2 border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg text-sm focus:border-blue-500 outline-none transition-colors"
+          />
+
+          <button
+            type="button"
+            disabled={loading || filtered.length === 0}
+            onClick={() =>
+              exportEmployeesToCsv(filtered, {
+                companyName: localStorage.getItem('companyName') || 'PaySphere',
+              })
+            }
+            title={
+              filtered.length === 0
+                ? 'No employees to export'
+                : `Export ${filtered.length} employee${filtered.length === 1 ? '' : 's'} to CSV`
+            }
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-500 rounded-lg text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-950/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent transition-colors"
+          >
+            <DownloadIcon sx={{ fontSize: 18 }} />
+            Export Roster
+          </button>
+        </div>
       </div>
 
       {/* Grid */}
