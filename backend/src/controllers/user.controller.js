@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const crypto = require("crypto");
 const User = require("../models/user.model");
+const Employee = require("../models/employee.model");
 const { sendEmail } = require("../utils/email");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -60,9 +61,20 @@ exports.getSettings = async (req, res) => {
     const user = await User.findById(req.userId).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    const employeeCount = await Employee.countDocuments({ createdBy: req.userId });
+
     res.status(200).json({
+      fullName: user.fullName,
+      email: user.email,
+      avatar: user.avatar,
+      companyName: user.companyName,
+      settings: user.settings,
       defaultOvertimeRate: user.defaultOvertimeRate || 0,
-      defaultDailyRate: user.defaultDailyRate || 0
+      defaultDailyRate: user.defaultDailyRate || 0,
+      isGoogleLinked: !!user.googleId,
+      organizationId: user._id.toString(),
+      payrollId: "PR-" + user._id.toString().slice(-6).toUpperCase(),
+      employeeCount
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -72,21 +84,72 @@ exports.getSettings = async (req, res) => {
 // UPDATE USER SETTINGS
 exports.updateSettings = async (req, res) => {
   try {
-    const { defaultOvertimeRate, defaultDailyRate } = req.body;
+    const { settings, fullName, email, companyName, defaultOvertimeRate, defaultDailyRate, avatar } = req.body;
 
-    const user = await User.findByIdAndUpdate(
-      req.userId,
-      { defaultOvertimeRate, defaultDailyRate },
-      { new: true }
-    );
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (fullName) user.fullName = fullName;
+    if (email) user.email = email;
+    if (companyName) user.companyName = companyName;
+    if (defaultOvertimeRate !== undefined) user.defaultOvertimeRate = defaultOvertimeRate;
+    if (defaultDailyRate !== undefined) user.defaultDailyRate = defaultDailyRate;
+    if (avatar !== undefined) user.avatar = avatar;
+
+    if (!user.settings) user.settings = {};
+
+    if (settings) {
+      if (settings.preferences) {
+        user.settings.preferences = { ...(user.settings.preferences || {}), ...settings.preferences };
+      }
+      if (settings.companyInfo) {
+        user.settings.companyInfo = { ...(user.settings.companyInfo || {}), ...settings.companyInfo };
+      }
+      if (settings.payrollConfig) {
+        user.settings.payrollConfig = { ...(user.settings.payrollConfig || {}), ...settings.payrollConfig };
+      }
+      if (settings.notifications) {
+        user.settings.notifications = { ...(user.settings.notifications || {}), ...settings.notifications };
+      }
+    }
+
+    await user.save();
 
     res.status(200).json({
       message: "Settings updated successfully",
-      settings: {
-        defaultOvertimeRate: user.defaultOvertimeRate,
-        defaultDailyRate: user.defaultDailyRate
-      }
+      settings: user.settings,
+      fullName: user.fullName,
+      email: user.email,
+      companyName: user.companyName,
+      avatar: user.avatar,
+      defaultOvertimeRate: user.defaultOvertimeRate,
+      defaultDailyRate: user.defaultDailyRate
     });
+  } catch (error) {
+    console.error("UPDATE SETTINGS ERROR:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// UPDATE PASSWORD
+exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.password) {
+      return res.status(400).json({ message: "No password set. Please use password recovery." });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Incorrect current password" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -233,6 +296,41 @@ exports.resetPassword = async (req, res) => {
 
     res.status(200).json({ message: "Password reset successful" });
   } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// DISCONNECT GOOGLE
+exports.disconnectGoogle = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.password) {
+      return res.status(400).json({ message: "You must set a password before disconnecting your Google account." });
+    }
+
+    user.googleId = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Google account disconnected successfully." });
+  } catch (error) {
+    console.error("DISCONNECT GOOGLE ERROR:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// DELETE ACCOUNT
+exports.deleteAccount = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    await User.findByIdAndDelete(req.userId);
+
+    res.status(200).json({ message: "Account deleted successfully." });
+  } catch (error) {
+    console.error("DELETE ACCOUNT ERROR:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
