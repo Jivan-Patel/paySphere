@@ -15,7 +15,7 @@ function parseTagValue(label) {
 }
 
 // FINALIZE PAYROLL — process activity entries and save payroll records
-exports.finalizePayroll = async (req, res) => {
+exports.finalizePayroll = async (req, res, next) => {
   let session = null;
   try {
     const { activities, month, year } = req.body;
@@ -194,13 +194,12 @@ exports.finalizePayroll = async (req, res) => {
         // ignore session cleanup error
       }
     }
-    console.error("Finalize payroll error:", error);
-    res.status(500).json({ message: "Server error during payroll finalization", error: error.message });
+    next(error);
   }
 };
 
 // GET PAYROLL SUMMARY for a month
-exports.getPayrollSummary = async (req, res) => {
+exports.getPayrollSummary = async (req, res, next) => {
   try {
     let month = req.query.month ? Number(req.query.month) : new Date().getMonth() + 1;
     let year = req.query.year ? Number(req.query.year) : new Date().getFullYear();
@@ -229,12 +228,12 @@ exports.getPayrollSummary = async (req, res) => {
       payrolls,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // EXPORT PAYROLL AS CSV
-exports.exportPayrollCSV = async (req, res) => {
+exports.exportPayrollCSV = async (req, res, next) => {
   try {
     const month = parseInt(req.query.month) || new Date().getMonth() + 1;
     const year = parseInt(req.query.year) || new Date().getFullYear();
@@ -255,14 +254,14 @@ exports.exportPayrollCSV = async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename=payroll-${month}-${year}.csv`);
     res.status(200).send(csvData);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 const { sendPayslipEmail } = require("../services/email.service");
 
 // SEND PAYSLIP EMAIL manually
-exports.sendPayslipEmailHandler = async (req, res) => {
+exports.sendPayslipEmailHandler = async (req, res, next) => {
   try {
     const payrollId = req.params.id;
     const payroll = await PayrollUpdate.findOne({ _id: payrollId, createdBy: req.userId });
@@ -283,13 +282,12 @@ exports.sendPayslipEmailHandler = async (req, res) => {
     await sendPayslipEmail(employee, payroll);
     res.status(200).json({ message: "Payslip email sent successfully" });
   } catch (error) {
-    console.error("Manual email error:", error);
-    res.status(500).json({ message: "Server error while sending email", error: error.message });
+    next(error);
   }
 };
 
 // BULK SEND PAYSLIP EMAILS (#140)
-exports.sendAllPayslipsEmailHandler = async (req, res) => {
+exports.sendAllPayslipsEmailHandler = async (req, res, next) => {
   try {
     let month = req.body.month ? Number(req.body.month) : (req.query.month ? Number(req.query.month) : new Date().getMonth() + 1);
     let year = req.body.year ? Number(req.body.year) : (req.query.year ? Number(req.query.year) : new Date().getFullYear());
@@ -350,8 +348,7 @@ exports.sendAllPayslipsEmailHandler = async (req, res) => {
       results,
     });
   } catch (error) {
-    console.error("Bulk email error:", error);
-    res.status(500).json({ message: "Server error during bulk email dispatch", error: error.message });
+    next(error);
   }
 };
 

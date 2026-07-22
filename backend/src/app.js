@@ -8,6 +8,8 @@ const payrollRoutes = require("./routes/payroll.routes");
 
 const app = express();
 
+const errorHandler = require("./middlewares/error.middleware");
+
 // Security headers
 app.use(helmet());
 
@@ -57,5 +59,8 @@ app.use((err, req, res, next) => {
   }
   next(err);
 });
+
+// Centralized error handler
+app.use(errorHandler);
 
 module.exports = app;

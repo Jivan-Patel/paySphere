@@ -4,7 +4,7 @@ const { parse } = require("csv-parse");
 const { isNonEmptyString } = require("../utils/validators");
 const PayrollUpdate = require("../models/payroll.model");
 // ADD EMPLOYEE
-exports.addEmployee = async (req, res) => {
+exports.addEmployee = async (req, res, next) => {
   try {
     const { fullName, role, monthlySalary, overtimeRate } = req.body;
 
@@ -42,12 +42,12 @@ exports.addEmployee = async (req, res) => {
 
     res.status(201).json({ message: "Employee added successfully", employee });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // GET ALL EMPLOYEES (for the logged-in user's company)
-exports.getEmployees = async (req, res) => {
+exports.getEmployees = async (req, res, next) => {
   try {
     let page = parseInt(req.query.page, 10);
     if (isNaN(page) || page < 1) page = 1;
@@ -91,15 +91,12 @@ exports.getEmployees = async (req, res) => {
       totalEmployees,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
 // GET RECENTLY ADDED EMPLOYEES (last 5)
-exports.getRecentEmployees = async (req, res) => {
+exports.getRecentEmployees = async (req, res, next) => {
   try {
     const employees = await Employee.find({ createdBy: req.userId })
       .sort({ createdAt: -1 })
@@ -107,11 +104,11 @@ exports.getRecentEmployees = async (req, res) => {
 
     res.status(200).json({ employees });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
-exports.importEmployees = async (req, res) => {
+exports.importEmployees = async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -231,23 +228,17 @@ exports.importEmployees = async (req, res) => {
             errors,
           });
         } catch (dbError) {
-          return res.status(500).json({
-            message: "Server error during employee import",
-            error: dbError.message,
-          });
+          next(dbError);
         }
       }
     );
   } catch (error) {
-    return res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
 // UPDATE EMPLOYEE
-exports.updateEmployee = async (req, res) => {
+exports.updateEmployee = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { fullName, role, monthlySalary, overtimeRate } = req.body;
@@ -282,13 +273,13 @@ exports.updateEmployee = async (req, res) => {
 
     res.status(200).json({ message: "Employee updated successfully", employee });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 
 // DELETE EMPLOYEE
-exports.deleteEmployee = async (req, res) => {
+exports.deleteEmployee = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -321,11 +312,6 @@ exports.deleteEmployee = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Delete employee error:", error);
-
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    next(error);
   }
 };
