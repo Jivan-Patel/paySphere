@@ -52,7 +52,7 @@ exports.signup = async (req, res) => {
 
     res.status(201).json({ token, companyName: newUser.companyName });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -74,7 +74,8 @@ exports.login = async (req, res) => {
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch)
+      return res.status(400).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign(
       { id: user._id, tokenVersion: user.tokenVersion || 0 },
@@ -84,15 +85,15 @@ exports.login = async (req, res) => {
 
     res.status(200).json({ token, companyName: user.companyName });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
 // GET USER SETTINGS
 exports.getSettings = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const employeeCount = await Employee.countDocuments({ createdBy: req.userId });
 
@@ -110,7 +111,7 @@ exports.getSettings = async (req, res) => {
       employeeCount
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -207,21 +208,27 @@ exports.googleAuth = async (req, res) => {
       });
       googleData = ticket.getPayload();
     } else if (accessToken) {
-      const response = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+      const response = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`,
+      );
       googleData = response.data;
     } else {
-      return res.status(400).json({ message: "No Google credentials provided" });
+      return res
+        .status(400)
+        .json({ message: 'No Google credentials provided' });
     }
 
     const { sub: googleId, email, name, picture } = googleData;
 
     let user = await User.findOne({ email });
+    const isNewUser = !user;
 
     if (!user) {
       if (!companyName) {
-        return res.status(202).json({ 
-          message: "Account doesn't exist. Please provide a company name to sign up.",
-          needsCompanyName: true 
+        return res.status(202).json({
+          message:
+            "Account doesn't exist. Please provide a company name to sign up.",
+          needsCompanyName: true,
         });
       }
 
@@ -246,14 +253,18 @@ exports.googleAuth = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.status(200).json({ 
-      token, 
+    res.status(200).json({
+      token,
       companyName: user.companyName,
-      message: user.isNew ? "Account created successfully" : "Logged in successfully"
+      message: isNewUser
+        ? 'Account created successfully'
+        : 'Logged in successfully',
     });
   } catch (error) {
-    console.error("Google Auth Error:", error);
-    res.status(500).json({ message: "Google auth failed", error: error.message });
+    console.error('Google Auth Error:', error);
+    res
+      .status(500)
+      .json({ message: 'Google auth failed', error: error.message });
   }
 };
 
@@ -268,27 +279,35 @@ exports.forgotPassword = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const user = await User.findOne({ email: cleanEmail });
     if (!user) {
-      return res.status(404).json({ message: "User with this email does not exist" });
+      return res
+        .status(404)
+        .json({ message: 'User with this email does not exist' });
     }
 
     // Generate token
-    const resetToken = crypto.randomBytes(20).toString("hex");
-    
+    const resetToken = crypto.randomBytes(20).toString('hex');
+
     // Set token and expiry (1 hour)
-    user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    user.resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
     user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
 
     // Reset link pointing to frontend
-    const frontendUrl = req.headers.origin || process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl =
+      req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
-    const text = `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n` +
+    const text =
+      `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n` +
       `Please click on the following link, or paste this into your browser to complete the process within one hour of receiving it:\n\n` +
       `${resetUrl}\n\n` +
       `If you did not request this, please ignore this email and your password will remain unchanged.\n`;
 
-    const html = `<p>You are receiving this email because you (or someone else) have requested the reset of the password for your account.</p>` +
+    const html =
+      `<p>You are receiving this email because you (or someone else) have requested the reset of the password for your account.</p>` +
       `<p>Please click on the following link, or paste this into your browser to complete the process within one hour of receiving it:</p>` +
       `<p><a href="${resetUrl}" style="background-color: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; display: inline-block;">Reset Password</a></p>` +
       `<p>If you cannot click the button, copy and paste the link below into your browser:</p>` +
@@ -298,14 +317,14 @@ exports.forgotPassword = async (req, res) => {
 
     await sendEmail({
       to: user.email,
-      subject: "PaySphere Password Reset Link",
+      subject: 'PaySphere Password Reset Link',
       text,
       html,
     });
 
-    res.status(200).json({ message: "Password reset link sent to email" });
+    res.status(200).json({ message: 'Password reset link sent to email' });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -319,7 +338,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 8 characters, contain at least one uppercase letter, one number, and one special character" });
     }
 
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
@@ -327,7 +346,9 @@ exports.resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Password reset token is invalid or has expired" });
+      return res
+        .status(400)
+        .json({ message: 'Password reset token is invalid or has expired' });
     }
 
     // Hash the new password
@@ -340,9 +361,9 @@ exports.resetPassword = async (req, res) => {
     user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
-    res.status(200).json({ message: "Password reset successful" });
+    res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -384,4 +405,3 @@ exports.deleteAccount = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-

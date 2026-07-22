@@ -1,86 +1,88 @@
-const { updateSettings } = require("../user.controller");
-const User = require("../../models/user.model");
+const { googleAuth } = require('../user.controller');
+const User = require('../../models/user.model');
+const jwt = require('jsonwebtoken');
 
-jest.mock("../../models/user.model");
+jest.mock('jsonwebtoken');
+jest.mock('google-auth-library', () => {
+  return {
+    OAuth2Client: jest.fn().mockImplementation(() => {
+      return {
+        verifyIdToken: jest.fn().mockResolvedValue({
+          getPayload: () => ({
+            sub: 'google123',
+            email: 'newuser@example.com',
+            name: 'New User',
+            picture: 'avatar.png',
+          }),
+        }),
+      };
+    }),
+  };
+});
 
-describe("User Controller - updateSettings Unit Tests (#104)", () => {
-  let req, res;
+jest.mock('../../models/user.model', () => {
+  const mockConstructor = jest.fn().mockImplementation((data) => {
+    return {
+      ...data,
+      save: jest.fn().mockResolvedValue({}),
+    };
+  });
+  mockConstructor.findOne = jest.fn();
+  return mockConstructor;
+});
+
+describe('Google Authentication Controller tests', () => {
+  let req;
+  let res;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     req = {
-      userId: "user123",
-      body: {},
+      body: {
+        credential: 'dummy_id_token',
+        companyName: 'Test Company',
+      },
     };
     res = {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
+      json: jest.fn(),
     };
-    jest.clearAllMocks();
+    jwt.sign.mockReturnValue('dummy_jwt_token');
   });
 
-  test("should return 404 if user is not found when updating settings", async () => {
-    req.body = { defaultOvertimeRate: 100, defaultDailyRate: 500 };
-    User.findByIdAndUpdate.mockResolvedValue(null);
+  test("should return 'Account created successfully' for a new Google sign-up", async () => {
+    User.findOne.mockResolvedValueOnce(null);
 
-    await updateSettings(req, res);
+    await googleAuth(req, res);
 
-    expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
-      "user123",
-      { defaultOvertimeRate: 100, defaultDailyRate: 500 },
-      { new: true, runValidators: true }
-    );
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ message: "User not found" });
-  });
-
-  test("should return 400 if defaultOvertimeRate is negative", async () => {
-    req.body = { defaultOvertimeRate: -50, defaultDailyRate: 500 };
-
-    await updateSettings(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: "Default rates must be non-negative numbers" });
-    expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
-  });
-
-  test("should return 400 if defaultDailyRate is negative", async () => {
-    req.body = { defaultOvertimeRate: 100, defaultDailyRate: -200 };
-
-    await updateSettings(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: "Default rates must be non-negative numbers" });
-    expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
-  });
-
-  test("should return 400 if rates are invalid types", async () => {
-    req.body = { defaultOvertimeRate: "invalid", defaultDailyRate: 500 };
-
-    await updateSettings(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: "Default rates must be non-negative numbers" });
-    expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
-  });
-
-  test("should successfully update settings and return 200", async () => {
-    req.body = { defaultOvertimeRate: 150, defaultDailyRate: 600 };
-    const updatedUser = {
-      _id: "user123",
-      defaultOvertimeRate: 150,
-      defaultDailyRate: 600,
-    };
-    User.findByIdAndUpdate.mockResolvedValue(updatedUser);
-
-    await updateSettings(req, res);
-
+    expect(User.findOne).toHaveBeenCalledWith({ email: 'newuser@example.com' });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
-      message: "Settings updated successfully",
-      settings: {
-        defaultOvertimeRate: 150,
-        defaultDailyRate: 600,
-      },
+      token: 'dummy_jwt_token',
+      companyName: 'Test Company',
+      message: 'Account created successfully',
+    });
+  });
+
+  test("should return 'Logged in successfully' for an existing user logging in", async () => {
+    const existingUser = {
+      _id: 'user123',
+      email: 'newuser@example.com',
+      companyName: 'Test Company',
+      googleId: 'google123',
+      save: jest.fn().mockResolvedValue({}),
+    };
+
+    User.findOne.mockResolvedValueOnce(existingUser);
+
+    await googleAuth(req, res);
+
+    expect(User.findOne).toHaveBeenCalledWith({ email: 'newuser@example.com' });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      token: 'dummy_jwt_token',
+      companyName: 'Test Company',
+      message: 'Logged in successfully',
     });
   });
 });
