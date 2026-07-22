@@ -1,5 +1,6 @@
 import DownloadIcon from '@mui/icons-material/Download';
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
@@ -561,7 +562,13 @@ export default function PaySphereDashboard() {
   const [employeeToEdit, setEmployeeToEdit] = useState(null); 
 
   const companyName = localStorage.getItem('companyName') || 'Acme Corp';
-  const token = localStorage.getItem('token');
+  const token = useSelector((state) => state.auth.token);
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/auth');
+    }
+  }, [token, navigate]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
