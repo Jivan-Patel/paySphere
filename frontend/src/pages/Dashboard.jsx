@@ -53,6 +53,7 @@ const DashboardOverview = ({
   employeeCount,
   loading,
   payrolls,
+  onEditEmployee, 
 }) => {
   const payrollMap = {};
   (payrolls || []).forEach((p) => {
@@ -246,6 +247,7 @@ const DashboardOverview = ({
               payroll={payrollMap[emp._id]}
               variant="overview"
               onAddUpdate={onAddUpdate}
+              onEdit={() => onEditEmployee(emp)}
             />
           ))
         )}
@@ -276,6 +278,7 @@ const EmployeeManagement = ({
   totalPages,
   setCurrentPage,
   onDeleteEmployee,
+  onEditEmployee, 
 }) => {
   const payrollMap = {};
   (payrolls || []).forEach((p) => {
@@ -349,6 +352,7 @@ const EmployeeManagement = ({
               payroll={payrollMap[emp._id]}
               variant="breakdown"
               onDeleteEmployee={onDeleteEmployee}
+              onEdit={() => onEditEmployee(emp)}
             />
           ))
         )}
@@ -391,6 +395,149 @@ const EmployeeManagement = ({
   );
 };
 
+// --- Edit Employee Modal Component ---
+const EditEmployeeModal = ({ employee, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    fullName: employee?.fullName || '',
+    role: employee?.role || '',
+    monthlySalary: employee?.monthlySalary || '',
+    overtimeRate: employee?.overtimeRate || '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    const salary = Number(formData.monthlySalary);
+    const otRate = Number(formData.overtimeRate);
+
+    // Validation Check (Step 5)
+    if (salary <= 0) {
+      return setError('Monthly salary must be a positive number.');
+    }
+    if (otRate < 0) {
+      return setError('Overtime rate cannot be negative.');
+    }
+
+    try {
+      setSubmitting(true);
+      await onSave(employee._id, {
+        fullName: formData.fullName,
+        role: formData.role,
+        monthlySalary: salary,
+        overtimeRate: otRate,
+      });
+    } catch (err) {
+      setError('Failed to update employee details.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!employee) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-opacity">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-200 dark:border-slate-800">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          Edit Employee
+        </h2>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              Full Name
+            </label>
+            <input
+              required
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              Role
+            </label>
+            <input
+              required
+              type="text"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                Monthly Salary (₹)
+              </label>
+              <input
+                required
+                type="number"
+                name="monthlySalary"
+                min="1"
+                value={formData.monthlySalary}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                Overtime Rate (₹)
+              </label>
+              <input
+                required
+                type="number"
+                name="overtimeRate"
+                min="0"
+                value={formData.overtimeRate}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-8">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm disabled:opacity-50 transition-colors"
+            >
+              {submitting ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default function PaySphereDashboard() {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('Dashboard');
@@ -402,8 +549,12 @@ export default function PaySphereDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [payrolls, setPayrolls] = useState([]);
+  
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [employeeToEdit, setEmployeeToEdit] = useState(null); 
+
   const companyName = localStorage.getItem('companyName') || 'Acme Corp';
   const token = localStorage.getItem('token');
 
@@ -443,9 +594,10 @@ export default function PaySphereDashboard() {
       e.fullName.toLowerCase().includes(search.toLowerCase()) ||
       (e.role || '').toLowerCase().includes(search.toLowerCase()),
   );
+  
   const handleDeleteEmployee = async () => {
     if (!employeeToDelete) return;
-
+    
     try {
       setDeleting(true);
 
@@ -467,6 +619,16 @@ export default function PaySphereDashboard() {
       setDeleting(false);
     }
   };
+
+  const handleEditSubmit = async (id, updatedData) => {
+    await api.put(`/api/employees/${id}`, updatedData);
+    
+    setEmployees((prev) =>
+      prev.map((emp) => (emp._id === id ? { ...emp, ...updatedData } : emp))
+    );
+    setEmployeeToEdit(null);
+  };
+  
   const getInitials = (name) =>
     name
       .split(' ')
@@ -489,7 +651,7 @@ export default function PaySphereDashboard() {
         />
       </Helmet>
 
-      {/* Sidebar (extracted component) */}
+      {/* Sidebar */}
       <Sidebar
         companyName={companyName}
         activePage={activePage}
@@ -550,6 +712,7 @@ export default function PaySphereDashboard() {
             employeeCount={employees.length}
             loading={loading}
             payrolls={payrolls}
+            onEditEmployee={(emp) => setEmployeeToEdit(emp)} 
           />
         ) : (
           <EmployeeManagement
@@ -562,13 +725,23 @@ export default function PaySphereDashboard() {
             totalPages={totalPages}
             setCurrentPage={setCurrentPage}
             onDeleteEmployee={(emp) => setEmployeeToDelete(emp)}
+            onEditEmployee={(emp) => setEmployeeToEdit(emp)} 
+          />
+        )}
+
+        {/* Edit Form Modal (Steps 2-5) */}
+        {employeeToEdit && (
+          <EditEmployeeModal
+            employee={employeeToEdit}
+            onClose={() => setEmployeeToEdit(null)}
+            onSave={handleEditSubmit}
           />
         )}
 
         {/* Delete Confirmation Modal */}
         {employeeToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white dark:bg-slate-900 rounded-xl p-6 w-96 shadow-xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-6 w-96 shadow-xl border border-gray-200 dark:border-slate-800">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Delete Employee?
               </h2>
@@ -586,7 +759,7 @@ export default function PaySphereDashboard() {
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setEmployeeToDelete(null)}
-                  className="px-4 py-2 border rounded-lg"
+                  className="px-4 py-2 border border-gray-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   Cancel
                 </button>
@@ -594,7 +767,7 @@ export default function PaySphereDashboard() {
                 <button
                   disabled={deleting}
                   onClick={handleDeleteEmployee}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg"
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm disabled:opacity-50 transition-colors"
                 >
                   {deleting ? 'Deleting...' : 'Delete'}
                 </button>
