@@ -11,13 +11,15 @@ const {
 const auth = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/upload.middleware");
 
+const { writeRateLimiter } = require("../middlewares/rateLimiter.middleware");
+
 const router = express.Router();
 
-router.post("/", auth, addEmployee);
-router.post("/import", auth, upload.single("file"), importEmployees);
+router.post("/", auth, writeRateLimiter, addEmployee);
+router.post("/import", auth, writeRateLimiter, upload.single("file"), importEmployees);
 router.get("/", auth, getEmployees);
 router.get("/recent", auth, getRecentEmployees);
-router.delete("/:id", auth, deleteEmployee);
-router.put("/:id", auth, updateEmployee);
+router.delete("/:id", auth, writeRateLimiter, deleteEmployee);
+router.put("/:id", auth, writeRateLimiter, updateEmployee);
 
 module.exports = router;
