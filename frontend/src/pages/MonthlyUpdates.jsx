@@ -180,6 +180,11 @@ export default function MonthlyUpdates() {
   const [selectedCalendarEmp, setSelectedCalendarEmp] = useState(null);
   const [showEmpPicker, setShowEmpPicker] = useState(false);
 
+  // Bulk Email Dispatch states (#140)
+  const [sendingBulkEmail, setSendingBulkEmail] = useState(false);
+  const [emailStatuses, setEmailStatuses] = useState({});
+  const [bulkEmailMsg, setBulkEmailMsg] = useState("");
+
   const companyName = localStorage.getItem("companyName") || "Acme Corp";
   const token = localStorage.getItem("token");
 
@@ -263,6 +268,31 @@ export default function MonthlyUpdates() {
       setFinalizeError(err.response?.data?.message || "Failed to finalize payroll.");
     } finally {
       setFinalizing(false);
+    }
+  };
+
+  // Handle Bulk Send Email (#140)
+  const handleSendAllEmails = async () => {
+    setSendingBulkEmail(true);
+    setBulkEmailMsg("");
+    try {
+      const now = new Date();
+      const res = await api.post("/api/payroll/send-all-emails", {
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
+      });
+      const statusMap = { ...emailStatuses };
+      if (res.data.results && Array.isArray(res.data.results)) {
+        res.data.results.forEach((r) => {
+          statusMap[r.employeeName] = r.status;
+        });
+      }
+      setEmailStatuses(statusMap);
+      setBulkEmailMsg(res.data.message || "Payslip emails dispatched!");
+    } catch (err) {
+      setBulkEmailMsg(err.response?.data?.message || "Failed to dispatch payslip emails.");
+    } finally {
+      setSendingBulkEmail(false);
     }
   };
 
@@ -734,6 +764,16 @@ export default function MonthlyUpdates() {
                       ))}
                     </div>
                   )}
+
+                  {bulkEmailMsg && (
+                    <div style={{
+                      marginTop:12, padding:"10px 14px", borderRadius:10,
+                      background: isDark ? "#1e293b" : "#EFF6FF", border: isDark ? "1px solid #334155" : "1px solid #BFDBFE",
+                      fontSize:13, color: isDark ? "#60A5FA" : "#1D4ED8", fontWeight:600,
+                    }}>
+                      📧 {bulkEmailMsg}
+                    </div>
+                  )}
                 </div>
 
                 {/* Results List */}
@@ -746,7 +786,24 @@ export default function MonthlyUpdates() {
                       <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
                         <Avatar name={r.employeeName} size={38} />
                         <div>
-                          <div style={{ fontWeight:700, fontSize:14.5, color: isDark ? "white" : "#111827" }}>{r.employeeName}</div>
+                          <div style={{ fontWeight:700, fontSize:14.5, color: isDark ? "white" : "#111827", display: "flex", alignItems: "center", gap: 8 }}>
+                            {r.employeeName}
+                            {emailStatuses[r.employeeName] === "sent" && (
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: "#F0FDF4", color: "#16A34A" }}>
+                                Sent ✉️
+                              </span>
+                            )}
+                            {emailStatuses[r.employeeName] === "no_email" && (
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: "#FFFBEB", color: "#D97706" }}>
+                                No Email ⚠️
+                              </span>
+                            )}
+                            {emailStatuses[r.employeeName] === "failed" && (
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: "#FEF2F2", color: "#DC2626" }}>
+                                Failed ❌
+                              </span>
+                            )}
+                          </div>
                           <div style={{ fontSize:12, color:"#9CA3AF" }}>Base: {fmt(r.baseSalary)}</div>
                         </div>
                       </div>
@@ -791,11 +848,24 @@ export default function MonthlyUpdates() {
                 </div>
 
                 {/* Modal Footer */}
-                <div style={{ padding:"16px 28px 24px", borderTop: isDark ? "1.5px solid #1e293b" : "1.5px solid #F0F1F3", display:"flex", gap:12, justifyContent:"flex-end" }}>
+                <div style={{ padding:"16px 28px 24px", borderTop: isDark ? "1.5px solid #1e293b" : "1.5px solid #F0F1F3", display:"flex", gap:10, justifyContent:"flex-end", flexWrap: "wrap" }}>
+                  <button
+                    onClick={handleSendAllEmails}
+                    disabled={sendingBulkEmail}
+                    style={{
+                      padding:"11px 20px", borderRadius:10,
+                      border: "none", background: isDark ? "#8B5CF6" : "#7C3AED",
+                      fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:700,
+                      color: "white", cursor: sendingBulkEmail ? "not-allowed" : "pointer",
+                      opacity: sendingBulkEmail ? 0.7 : 1,
+                    }}
+                  >
+                    {sendingBulkEmail ? "Sending Emails... ⏳" : "📧 Email All Payslips"}
+                  </button>
                   <button
                     onClick={() => { const now = new Date(); fetch(`/api/payroll/export-csv?month=${now.getMonth()+1}&year=${now.getFullYear()}`, { headers: { Authorization: `Bearer ${token}` } }).then(r=>r.ok?r.blob():null).then(b=>{if(!b){alert('No data to export');return;}const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`payroll-${now.getMonth()+1}-${now.getFullYear()}.csv`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}).catch(()=>alert('Export failed.')); }}
                     style={{
-                      padding:"11px 24px", borderRadius:10,
+                      padding:"11px 20px", borderRadius:10,
                       border: isDark ? "1.5px solid #334155" : "1.5px solid #E5E7EB", background: isDark ? "#1e293b" : "white",
                       fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600,
                       color: isDark ? "#cbd5e1" : "#374151", cursor:"pointer",

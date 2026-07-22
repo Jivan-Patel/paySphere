@@ -286,4 +286,72 @@ exports.sendPayslipEmailHandler = async (req, res) => {
     console.error("Manual email error:", error);
     res.status(500).json({ message: "Server error while sending email", error: error.message });
   }
-}
+};
+
+// BULK SEND PAYSLIP EMAILS (#140)
+exports.sendAllPayslipsEmailHandler = async (req, res) => {
+  try {
+    let month = req.body.month ? Number(req.body.month) : (req.query.month ? Number(req.query.month) : new Date().getMonth() + 1);
+    let year = req.body.year ? Number(req.body.year) : (req.query.year ? Number(req.query.year) : new Date().getFullYear());
+
+    if (isNaN(month) || month < 1 || month > 12) {
+      return res.status(400).json({ message: "Invalid month parameter" });
+    }
+    if (isNaN(year) || year < 2000 || year > 2100) {
+      return res.status(400).json({ message: "Invalid year parameter" });
+    }
+
+    const payrolls = await PayrollUpdate.find({
+      createdBy: req.userId,
+      month,
+      year,
+    });
+
+    if (payrolls.length === 0) {
+      return res.status(404).json({ message: "No payroll records found for the selected month and year." });
+    }
+
+    const results = [];
+    let sentCount = 0;
+    let failedCount = 0;
+    let skippedCount = 0;
+
+    for (const payroll of payrolls) {
+      const employee = await Employee.findById(payroll.employeeId);
+      if (!employee) {
+        results.push({ payrollId: payroll._id, employeeName: payroll.employeeName, status: "failed", error: "Employee record not found" });
+        failedCount++;
+        continue;
+      }
+
+      if (!employee.email) {
+        results.push({ payrollId: payroll._id, employeeName: employee.fullName, status: "no_email", message: "No email address registered" });
+        skippedCount++;
+        continue;
+      }
+
+      try {
+        await sendPayslipEmail(employee, payroll);
+        results.push({ payrollId: payroll._id, employeeName: employee.fullName, email: employee.email, status: "sent" });
+        sentCount++;
+      } catch (err) {
+        console.error(`Failed to send email to ${employee.fullName}:`, err);
+        results.push({ payrollId: payroll._id, employeeName: employee.fullName, email: employee.email, status: "failed", error: err.message });
+        failedCount++;
+      }
+    }
+
+    res.status(200).json({
+      message: `Bulk email dispatch complete. Sent: ${sentCount}, Skipped: ${skippedCount}, Failed: ${failedCount}`,
+      sentCount,
+      failedCount,
+      skippedCount,
+      total: payrolls.length,
+      results,
+    });
+  } catch (error) {
+    console.error("Bulk email error:", error);
+    res.status(500).json({ message: "Server error during bulk email dispatch", error: error.message });
+  }
+};
+
