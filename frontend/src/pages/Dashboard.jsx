@@ -18,7 +18,8 @@ import { exportEmployeesToCsv } from '../utils/exportEmployeesToCsv';
 // Trigger a file download from the browser
 const downloadFile = (url, filename) => {
   const token = localStorage.getItem('token');
-  fetch(url, {
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  fetch(`${baseUrl}${url}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
     .then((res) => {
