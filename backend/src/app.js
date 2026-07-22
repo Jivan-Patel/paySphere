@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const multer = require("multer");
 const userRoutes = require("./routes/user.routes");
 const employeeRoutes = require("./routes/employee.routes");
 const payrollRoutes = require("./routes/payroll.routes");
@@ -42,6 +43,17 @@ app.use("/api/payroll", payrollRoutes);
 app.use((err, req, res, next) => {
   if (err.message === "Not allowed by CORS") {
     return res.status(403).json({ message: "CORS not allowed" });
+  }
+  next(err);
+});
+
+// Multer error handler — return 400 for file upload issues
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ message: "File too large. Maximum size is 5MB." });
+    }
+    return res.status(400).json({ message: "File upload error" });
   }
   next(err);
 });
