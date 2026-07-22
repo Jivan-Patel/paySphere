@@ -13,7 +13,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
 // SIGN UP
-exports.signup = async (req, res) => {
+exports.signup = async (req, res, next) => {
   try {
     const { fullName, email, companyName, password } = req.body;
 
@@ -52,12 +52,12 @@ exports.signup = async (req, res) => {
 
     res.status(201).json({ token, companyName: newUser.companyName });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    next(error);
   }
 };
 
 // LOGIN
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -85,12 +85,12 @@ exports.login = async (req, res) => {
 
     res.status(200).json({ token, companyName: user.companyName });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    next(error);
   }
 };
 
 // GET USER SETTINGS
-exports.getSettings = async (req, res) => {
+exports.getSettings = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
@@ -111,12 +111,12 @@ exports.getSettings = async (req, res) => {
       employeeCount
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    next(error);
   }
 };
 
 // UPDATE USER SETTINGS
-exports.updateSettings = async (req, res) => {
+exports.updateSettings = async (req, res, next) => {
   try {
     const { settings, fullName, email, companyName, defaultOvertimeRate, defaultDailyRate, avatar } = req.body;
 
@@ -167,13 +167,12 @@ exports.updateSettings = async (req, res) => {
       defaultDailyRate: user.defaultDailyRate
     });
   } catch (error) {
-    console.error("UPDATE SETTINGS ERROR:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // UPDATE PASSWORD
-exports.updatePassword = async (req, res) => {
+exports.updatePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.userId);
@@ -192,11 +191,11 @@ exports.updatePassword = async (req, res) => {
 
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 // GOOGLE AUTH
-exports.googleAuth = async (req, res) => {
+exports.googleAuth = async (req, res, next) => {
   try {
     const { credential, accessToken, companyName } = req.body;
     let googleData;
@@ -261,10 +260,7 @@ exports.googleAuth = async (req, res) => {
         : 'Logged in successfully',
     });
   } catch (error) {
-    console.error('Google Auth Error:', error);
-    res
-      .status(500)
-      .json({ message: 'Google auth failed', error: error.message });
+    next(error);
   }
 };
 
@@ -272,7 +268,7 @@ exports.googleAuth = async (req, res) => {
 const resetCooldowns = new Map();
 
 // FORGOT PASSWORD
-exports.forgotPassword = async (req, res) => {
+exports.forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
     if (!isNonEmptyString(email) || !isValidEmail(email)) {
@@ -336,12 +332,12 @@ exports.forgotPassword = async (req, res) => {
 
     res.status(200).json({ message: "If an account with that email exists, a password reset link has been sent." });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    next(error);
   }
 };
 
 // RESET PASSWORD
-exports.resetPassword = async (req, res) => {
+exports.resetPassword = async (req, res, next) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
@@ -375,12 +371,12 @@ exports.resetPassword = async (req, res) => {
 
     res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    next(error);
   }
 };
 
 // DISCONNECT GOOGLE
-exports.disconnectGoogle = async (req, res) => {
+exports.disconnectGoogle = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -394,13 +390,12 @@ exports.disconnectGoogle = async (req, res) => {
 
     res.status(200).json({ message: "Google account disconnected successfully." });
   } catch (error) {
-    console.error("DISCONNECT GOOGLE ERROR:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 // DELETE ACCOUNT
-exports.deleteAccount = async (req, res) => {
+exports.deleteAccount = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -413,7 +408,6 @@ exports.deleteAccount = async (req, res) => {
 
     res.status(200).json({ message: "Account and associated data deleted successfully." });
   } catch (error) {
-    console.error("DELETE ACCOUNT ERROR:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 };
