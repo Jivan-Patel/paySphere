@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import ThemeToggle from "../components/ThemeToggle";
 import api from "../services/api";
 
@@ -82,8 +81,7 @@ const Avatar = ({ name, size = 36 }) => {
 
 export default function AddEmployee() {
   const navigate = useNavigate();
-  const themeMode = useSelector((state) => state.ui.themeMode);
-  const isDark = themeMode === "dark";
+
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const companyName = localStorage.getItem("companyName") || "Acme Corp";
@@ -95,9 +93,7 @@ export default function AddEmployee() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [showSettings, setShowSettings] = useState(false);
-  const [settings, setSettings] = useState({ defaultOvertimeRate: 0, defaultDailyRate: 0 });
-  const [updatingSettings, setUpdatingSettings] = useState(false);
+
   const [csvFile, setCsvFile] = useState(null);
   const [uploadingCsv, setUploadingCsv] = useState(false);
   const fileInputRef = useRef(null);
@@ -121,36 +117,13 @@ export default function AddEmployee() {
 
   useEffect(() => {
     if (token) {
-      fetchRecent();
+      setTimeout(() => { fetchRecent(); }, 0);
     } else {
-      setLoadingRecent(false);
+      setTimeout(() => setLoadingRecent(false), 0);
     }
   }, [token]);
 
-  // Fetch settings
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await api.get(`/api/auth/settings`);
-        setSettings(res.data);
-      } catch (err) {
-        console.error("Failed to fetch settings:", err);
-      }
-    };
-    if (token) fetchSettings();
-  }, [token]);
 
-  const saveSettings = async () => {
-    setUpdatingSettings(true);
-    try {
-      await api.put(`/api/auth/settings`, settings);
-      setShowSettings(false);
-    } catch (err) {
-      alert("Failed to save settings");
-    } finally {
-      setUpdatingSettings(false);
-    }
-  };
 
   const handleCsvUpload = async () => {
     if (!csvFile) {
@@ -229,7 +202,7 @@ export default function AddEmployee() {
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", path: "/dashboard", icon: <GridIcon /> },
     { id: "employees", label: "Employees", path: "/dashboard?tab=employees", icon: <PeopleIcon /> },
-    { id: "settings", label: "Payroll Settings", path: "#", icon: <SupportIcon /> }, // will open modal
+    { id: "settings", label: "Settings", path: "/settings", icon: <SupportIcon /> },
   ];
 
   const getInitials = (name) =>
@@ -282,11 +255,7 @@ export default function AddEmployee() {
             <button
               key={item.id}
               onClick={() => {
-                if (item.id === "settings") {
-                  setShowSettings(true);
-                } else {
-                  navigate(item.path);
-                }
+                navigate(item.path);
                 setIsSidebarOpen(false);
               }}
               className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition ${
@@ -587,46 +556,6 @@ export default function AddEmployee() {
           </div>
         </main>
 
-        {/* Settings Modal */}
-        {showSettings && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] backdrop-blur-sm" onClick={() => setShowSettings(false)}>
-            <div className="bg-white dark:bg-slate-900 rounded-2xl w-[92%] max-w-[450px] overflow-hidden shadow-2xl border border-transparent dark:border-slate-800" onClick={e => e.stopPropagation()}>
-              <div className="p-7 border-b border-gray-100 dark:border-slate-800">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Payroll Settings</h2>
-                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Set default rates for all employees.</p>
-              </div>
-
-              <div className="p-7 space-y-6">
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-slate-400 tracking-wider mb-2 block">Default Overtime Rate (₹ / hr)</span>
-                  <input 
-                    type="number"
-                    value={settings.defaultOvertimeRate}
-                    onChange={(e) => setSettings({ ...settings, defaultOvertimeRate: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-950 text-gray-900 dark:text-white font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 border border-transparent dark:border-slate-800 outline-none transition"
-                  />
-                </div>
-
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-slate-400 tracking-wider mb-2 block">Default Daily Deduction (₹ / day)</span>
-                  <input 
-                    type="number"
-                    value={settings.defaultDailyRate}
-                    onChange={(e) => setSettings({ ...settings, defaultDailyRate: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-slate-950 text-gray-900 dark:text-white font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 border border-transparent dark:border-slate-800 outline-none transition"
-                  />
-                </div>
-              </div>
-
-              <div className="p-6 border-t border-gray-100 dark:border-slate-800 flex gap-3 justify-end">
-                <button onClick={() => setShowSettings(false)} className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 text-sm font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition">Cancel</button>
-                <button onClick={saveSettings} disabled={updatingSettings} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition disabled:opacity-50">
-                  {updatingSettings ? "Saving..." : "Save Settings"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
       </div>
     </div>

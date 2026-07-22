@@ -34,11 +34,37 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  settings: {
+    preferences: {
+      language: { type: String, default: 'English' },
+      theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' }
+    },
+    companyInfo: {
+      payrollCycle: { type: String, enum: ['weekly', 'bi-weekly', 'monthly'], default: 'monthly' },
+    },
+    payrollConfig: {
+      currency: { type: String, default: 'INR' },
+      leaveDeductionPolicy: { type: String, enum: ['basic_only', 'full_salary'], default: 'basic_only' }
+    },
+    notifications: {
+      emailReminders: { type: Boolean, default: true },
+      systemAlerts: { type: Boolean, default: true },
+      payrollCompletion: { type: Boolean, default: true }
+    }
+  },
   resetPasswordToken: {
     type: String,
   },
   resetPasswordExpires: {
     type: Date,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  tokenVersion: {
+    type: Number,
+    default: 0,
   },
 }, { timestamps: true });
 

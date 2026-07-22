@@ -1,36 +1,54 @@
-const axios = require('axios');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require('google-auth-library');
-const crypto = require('crypto');
-const User = require('../models/user.model');
-const { sendEmail } = require('../utils/email');
+const axios = require("axios");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
+const crypto = require("crypto");
+const User = require("../models/user.model");
+const Employee = require("../models/employee.model");
+const PayrollUpdate = require("../models/payroll.model");
+const { sendEmail } = require("../utils/email");
+const { isNonEmptyString, isValidEmail } = require("../utils/validators");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
 // SIGN UP
 exports.signup = async (req, res) => {
   try {
     const { fullName, email, companyName, password } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: 'User already exists' });
+    if (!isNonEmptyString(fullName) || !isNonEmptyString(email) || !isNonEmptyString(companyName) || !isNonEmptyString(password)) {
+      return res.status(400).json({ message: "Full name, email, company name, and password are required non-empty strings" });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: "Invalid email address format" });
+    }
+
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ message: "Password must be at least 8 characters, contain at least one uppercase letter, one number, and one special character" });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser) return res.status(400).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const newUser = new User({
-      fullName,
-      email,
-      companyName,
+      fullName: fullName.trim(),
+      email: cleanEmail,
+      companyName: companyName.trim(),
       password: hashedPassword,
     });
 
     await newUser.save();
 
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      { id: newUser._id, tokenVersion: newUser.tokenVersion || 0 },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.status(201).json({ token, companyName: newUser.companyName });
   } catch (error) {
@@ -43,16 +61,27 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!isNonEmptyString(email) || !isNonEmptyString(password)) {
+      return res.status(400).json({ message: "Email and password are required strings" });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: "Invalid email address format" });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(400).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      { id: user._id, tokenVersion: user.tokenVersion || 0 },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.status(200).json({ token, companyName: user.companyName });
   } catch (error) {
@@ -66,9 +95,20 @@ exports.getSettings = async (req, res) => {
     const user = await User.findById(req.userId).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    const employeeCount = await Employee.countDocuments({ createdBy: req.userId });
+
     res.status(200).json({
+      fullName: user.fullName,
+      email: user.email,
+      avatar: user.avatar,
+      companyName: user.companyName,
+      settings: user.settings,
       defaultOvertimeRate: user.defaultOvertimeRate || 0,
       defaultDailyRate: user.defaultDailyRate || 0,
+      isGoogleLinked: !!user.googleId,
+      organizationId: user._id.toString(),
+      payrollId: "PR-" + user._id.toString().slice(-6).toUpperCase(),
+      employeeCount
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -78,23 +118,81 @@ exports.getSettings = async (req, res) => {
 // UPDATE USER SETTINGS
 exports.updateSettings = async (req, res) => {
   try {
-    const { defaultOvertimeRate, defaultDailyRate } = req.body;
+    const { settings, fullName, email, companyName, defaultOvertimeRate, defaultDailyRate, avatar } = req.body;
 
-    const user = await User.findByIdAndUpdate(
-      req.userId,
-      { defaultOvertimeRate, defaultDailyRate },
-      { new: true },
-    );
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (
+      (defaultOvertimeRate !== undefined && (typeof defaultOvertimeRate !== "number" || isNaN(defaultOvertimeRate) || defaultOvertimeRate < 0)) ||
+      (defaultDailyRate !== undefined && (typeof defaultDailyRate !== "number" || isNaN(defaultDailyRate) || defaultDailyRate < 0))
+    ) {
+      return res.status(400).json({ message: "Default rates must be non-negative numbers" });
+    }
+
+    if (fullName) user.fullName = fullName;
+    if (email) user.email = email;
+    if (companyName) user.companyName = companyName;
+    if (defaultOvertimeRate !== undefined) user.defaultOvertimeRate = defaultOvertimeRate;
+    if (defaultDailyRate !== undefined) user.defaultDailyRate = defaultDailyRate;
+    if (avatar !== undefined) user.avatar = avatar;
+
+    if (!user.settings) user.settings = {};
+
+    if (settings) {
+      if (settings.preferences) {
+        user.settings.preferences = { ...(user.settings.preferences || {}), ...settings.preferences };
+      }
+      if (settings.companyInfo) {
+        user.settings.companyInfo = { ...(user.settings.companyInfo || {}), ...settings.companyInfo };
+      }
+      if (settings.payrollConfig) {
+        user.settings.payrollConfig = { ...(user.settings.payrollConfig || {}), ...settings.payrollConfig };
+      }
+      if (settings.notifications) {
+        user.settings.notifications = { ...(user.settings.notifications || {}), ...settings.notifications };
+      }
+    }
+
+    await user.save();
 
     res.status(200).json({
-      message: 'Settings updated successfully',
-      settings: {
-        defaultOvertimeRate: user.defaultOvertimeRate,
-        defaultDailyRate: user.defaultDailyRate,
-      },
+      message: "Settings updated successfully",
+      settings: user.settings,
+      fullName: user.fullName,
+      email: user.email,
+      companyName: user.companyName,
+      avatar: user.avatar,
+      defaultOvertimeRate: user.defaultOvertimeRate,
+      defaultDailyRate: user.defaultDailyRate
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("UPDATE SETTINGS ERROR:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// UPDATE PASSWORD
+exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.password) {
+      return res.status(400).json({ message: "No password set. Please use password recovery." });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Incorrect current password" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 // GOOGLE AUTH
@@ -149,9 +247,11 @@ exports.googleAuth = async (req, res) => {
       await user.save();
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      { id: user._id, tokenVersion: user.tokenVersion || 0 },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.status(200).json({
       token,
@@ -172,11 +272,12 @@ exports.googleAuth = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
+    if (!isNonEmptyString(email) || !isValidEmail(email)) {
+      return res.status(400).json({ message: "A valid email address is required" });
     }
 
-    const user = await User.findOne({ email });
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
     if (!user) {
       return res
         .status(404)
@@ -233,8 +334,8 @@ exports.resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    if (!password) {
-      return res.status(400).json({ message: 'New password is required' });
+    if (!isNonEmptyString(password) || !passwordRegex.test(password)) {
+      return res.status(400).json({ message: "Password must be at least 8 characters, contain at least one uppercase letter, one number, and one special character" });
     }
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
@@ -253,14 +354,54 @@ exports.resetPassword = async (req, res) => {
     // Hash the new password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Save user new password and clear token fields
+    // Save user new password, clear token fields, and increment tokenVersion
     user.password = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
     res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// DISCONNECT GOOGLE
+exports.disconnectGoogle = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.password) {
+      return res.status(400).json({ message: "You must set a password before disconnecting your Google account." });
+    }
+
+    user.googleId = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Google account disconnected successfully." });
+  } catch (error) {
+    console.error("DISCONNECT GOOGLE ERROR:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// DELETE ACCOUNT
+exports.deleteAccount = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Cascading deletes to prevent orphaned records
+    await Employee.deleteMany({ createdBy: req.userId });
+    await PayrollUpdate.deleteMany({ createdBy: req.userId });
+    
+    await User.findByIdAndDelete(req.userId);
+
+    res.status(200).json({ message: "Account and associated data deleted successfully." });
+  } catch (error) {
+    console.error("DELETE ACCOUNT ERROR:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

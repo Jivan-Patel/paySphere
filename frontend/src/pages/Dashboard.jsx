@@ -1,4 +1,5 @@
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import DownloadIcon from '@mui/icons-material/Download';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,32 @@ import {
   StatCardSkeleton,
 } from '../components/common/Skeleton';
 import api from '../services/api';
+import { exportEmployeesToCsv } from '../utils/exportEmployeesToCsv';
+
+// Trigger a file download from the browser
+const downloadFile = (url, filename) => {
+  const token = localStorage.getItem('token');
+  fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error('No data to export');
+      return res.blob();
+    })
+    .then((blob) => {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    })
+    .catch((err) => {
+      console.error('Export failed:', err);
+      alert('No payroll data found for the current month. Finalize payroll first.');
+    });
+};
 
 // --- Dashboard Component ---
 const DashboardOverview = ({
@@ -32,9 +59,6 @@ const DashboardOverview = ({
   });
 
   const fmt = (n) => '₹' + Math.abs(n).toLocaleString('en-IN');
-  const themeMode = useSelector((state) => state.ui.themeMode);
-  const isDark = themeMode === 'dark';
-
   const [gettingStarted, setGettingStarted] = useState(() => {
     return localStorage.getItem('showGettingStartedCard') !== 'false';
   });
@@ -63,6 +87,13 @@ const DashboardOverview = ({
         <div className="flex gap-3 w-full sm:w-auto">
           <button className="flex-1 cursor-pointer sm:flex-none px-5 py-2.5 border border-gray-200 dark:border-slate-800 dark:text-slate-200 rounded-lg text-sm font-semibold hover:shadow dark:hover:bg-slate-800 transition-colors">
             Reports
+          </button>
+
+          <button
+            onClick={() => downloadFile('/api/payroll/export-csv', `payroll-export.csv`)}
+            className="flex-1 cursor-pointer sm:flex-none px-5 py-2.5 border border-gray-200 dark:border-slate-800 dark:text-slate-200 rounded-lg text-sm font-semibold hover:shadow dark:hover:bg-slate-800 transition-colors"
+          >
+            Export CSV
           </button>
 
           <button
@@ -145,18 +176,39 @@ const DashboardOverview = ({
         </div>
       )}
 
-      {/* Search */}
+      {/* Search + Export Roster */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">
           Employee Directory
         </h2>
 
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search employees..."
-          className="w-full sm:w-auto px-4 py-2 border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg text-sm focus:border-blue-500 outline-none transition-colors"
-        />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search employees..."
+            className="w-full sm:w-auto px-4 py-2 border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg text-sm focus:border-blue-500 outline-none transition-colors"
+          />
+
+          <button
+            type="button"
+            disabled={loading || filtered.length === 0}
+            onClick={() =>
+              exportEmployeesToCsv(filtered, {
+                companyName: localStorage.getItem('companyName') || 'PaySphere',
+              })
+            }
+            title={
+              filtered.length === 0
+                ? 'No employees to export'
+                : `Export ${filtered.length} employee${filtered.length === 1 ? '' : 's'} to CSV`
+            }
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-500 rounded-lg text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-950/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent transition-colors"
+          >
+            <DownloadIcon sx={{ fontSize: 18 }} />
+            Export Roster
+          </button>
+        </div>
       </div>
 
       {/* Grid */}
@@ -295,9 +347,6 @@ const EmployeeManagement = ({
   setCurrentPage,
 }) => {
   const fmt = (n) => '₹' + Math.abs(n).toLocaleString('en-IN');
-  const themeMode = useSelector((state) => state.ui.themeMode);
-  const isDark = themeMode === 'dark';
-
   // Build a map from employeeId to payroll data
   const payrollMap = {};
   (payrolls || []).forEach((p) => {
@@ -556,9 +605,6 @@ const EmployeeManagement = ({
 
 export default function PaySphereDashboard() {
   const navigate = useNavigate();
-  const themeMode = useSelector((state) => state.ui.themeMode);
-  const isDark = themeMode === 'dark';
-
   const [activePage, setActivePage] = useState('Dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -567,12 +613,6 @@ export default function PaySphereDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [payrolls, setPayrolls] = useState([]);
-  const [showSettings, setShowSettings] = useState(false);
-  const [settings, setSettings] = useState({
-    defaultOvertimeRate: 0,
-    defaultDailyRate: 0,
-  });
-  const [updatingSettings, setUpdatingSettings] = useState(false);
   const companyName = localStorage.getItem('companyName') || 'Acme Corp';
   const token = localStorage.getItem('token');
 
@@ -595,33 +635,8 @@ export default function PaySphereDashboard() {
       }
     };
     if (token) fetchData();
-    else setLoading(false);
+    else setTimeout(() => setLoading(false), 0);
   }, [token, currentPage]);
-
-  // Fetch settings
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await api.get(`/api/auth/settings`);
-        setSettings(res.data);
-      } catch (err) {
-        console.error('Failed to fetch settings:', err);
-      }
-    };
-    if (token) fetchSettings();
-  }, [token]);
-
-  const saveSettings = async () => {
-    setUpdatingSettings(true);
-    try {
-      await api.put(`/api/auth/settings`, settings);
-      setShowSettings(false);
-    } catch (err) {
-      alert('Failed to save settings');
-    } finally {
-      setUpdatingSettings(false);
-    }
-  };
 
   const payrollMap = {};
   payrolls.forEach((p) => {
@@ -696,12 +711,12 @@ export default function PaySphereDashboard() {
         </div>
 
         <nav className="flex-1 p-3 space-y-1">
-          {['Dashboard', 'Employees', 'Payroll Settings'].map((item) => (
+          {['Dashboard', 'Employees', 'Settings'].map((item) => (
             <button
               key={item}
               onClick={() => {
-                if (item === 'Payroll Settings') {
-                  setShowSettings(true);
+                if (item === 'Settings') {
+                  navigate('/settings');
                 } else {
                   setActivePage(item);
                 }
@@ -792,191 +807,6 @@ export default function PaySphereDashboard() {
           />
         )}
 
-        {/* Settings Modal */}
-        {showSettings && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 100,
-              backdropFilter: 'blur(4px)',
-            }}
-            onClick={() => setShowSettings(false)}
-          >
-            <div
-              style={{
-                background: isDark ? '#1e293b' : 'white',
-                borderRadius: 20,
-                width: '92%',
-                maxWidth: 450,
-                padding: 0,
-                overflow: 'hidden',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
-                border: isDark ? '1.5px solid #334155' : 'none',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                style={{
-                  padding: '28px 28px 20px',
-                  borderBottom: isDark
-                    ? '1.5px solid #334155'
-                    : '1.5px solid #F0F1F3',
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: 24,
-                    fontWeight: 700,
-                    color: isDark ? 'white' : '#111827',
-                    margin: 0,
-                  }}
-                >
-                  Payroll Settings
-                </h2>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: isDark ? '#94a3b8' : '#6B7280',
-                    margin: '8px 0 0',
-                  }}
-                >
-                  Set default rates for all employees.
-                </p>
-              </div>
-
-              <div style={{ padding: '24px 28px' }}>
-                <label style={{ display: 'block', marginBottom: 20 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: isDark ? '#94a3b8' : '#9CA3AF',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: 8,
-                      display: 'block',
-                    }}
-                  >
-                    Default Overtime Rate (₹ / hr)
-                  </span>
-                  <input
-                    type="number"
-                    value={settings.defaultOvertimeRate}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        defaultOvertimeRate: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      background: isDark ? '#0f172a' : '#F3F4F6',
-                      border: isDark
-                        ? '1.5px solid #334155'
-                        : '1.5px solid transparent',
-                      borderRadius: 12,
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: isDark ? 'white' : '#111827',
-                      outline: 'none',
-                    }}
-                  />
-                </label>
-
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: isDark ? '#94a3b8' : '#9CA3AF',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: 8,
-                      display: 'block',
-                    }}
-                  >
-                    Default Daily Deduction (₹ / day)
-                  </span>
-                  <input
-                    type="number"
-                    value={settings.defaultDailyRate}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        defaultDailyRate: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      background: isDark ? '#0f172a' : '#F3F4F6',
-                      border: isDark
-                        ? '1.5px solid #334155'
-                        : '1.5px solid transparent',
-                      borderRadius: 12,
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: isDark ? 'white' : '#111827',
-                      outline: 'none',
-                    }}
-                  />
-                </label>
-              </div>
-
-              <div
-                style={{
-                  padding: '16px 28px 24px',
-                  borderTop: isDark
-                    ? '1.5px solid #334155'
-                    : '1.5px solid #F0F1F3',
-                  display: 'flex',
-                  gap: 12,
-                  justifyContent: 'flex-end',
-                }}
-              >
-                <button
-                  onClick={() => setShowSettings(false)}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 10,
-                    border: isDark
-                      ? '1.5px solid #334155'
-                      : '1.5px solid #E5E7EB',
-                    background: isDark ? '#1e293b' : 'white',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: isDark ? '#cbd5e1' : '#374151',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveSettings}
-                  disabled={updatingSettings}
-                  style={{
-                    padding: '10px 24px',
-                    borderRadius: 10,
-                    border: 'none',
-                    background: '#2563EB',
-                    color: 'white',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    cursor: updatingSettings ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {updatingSettings ? 'Saving...' : 'Save Settings'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
