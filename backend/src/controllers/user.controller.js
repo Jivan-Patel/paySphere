@@ -268,6 +268,9 @@ exports.googleAuth = async (req, res) => {
   }
 };
 
+// Local Map to store cooldowns for password reset requests (5 minutes per email)
+const resetCooldowns = new Map();
+
 // FORGOT PASSWORD
 exports.forgotPassword = async (req, res) => {
   try {
@@ -277,11 +280,20 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // Check cooldown for this email (5 minutes)
+    const lastRequest = resetCooldowns.get(cleanEmail);
+    if (lastRequest && Date.now() - lastRequest < 5 * 60 * 1000) {
+      // Still in cooldown period, return generic message without sending email
+      return res.status(200).json({ message: "If an account with that email exists, a password reset link has been sent." });
+    }
+
+    // Update cooldown
+    resetCooldowns.set(cleanEmail, Date.now());
+
     const user = await User.findOne({ email: cleanEmail });
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: 'User with this email does not exist' });
+      return res.status(200).json({ message: "If an account with that email exists, a password reset link has been sent." });
     }
 
     // Generate token
@@ -322,7 +334,7 @@ exports.forgotPassword = async (req, res) => {
       html,
     });
 
-    res.status(200).json({ message: 'Password reset link sent to email' });
+    res.status(200).json({ message: "If an account with that email exists, a password reset link has been sent." });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
