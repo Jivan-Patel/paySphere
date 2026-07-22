@@ -81,3 +81,93 @@ describe("Payroll Controller - finalizePayroll parseTagValue & Transactions Unit
     expect(result.netSalary).toBe(50500);
   });
 });
+
+describe("finalizePayroll month/year validation tests (#79)", () => {
+  let req, res;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    req = {
+      userId: "user123",
+      body: {
+        activities: [
+          {
+            employeeId: "emp123",
+            name: "John Doe",
+            tags: [],
+          },
+        ],
+      },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    };
+  });
+
+  test("should return 400 if month is out of range (13)", async () => {
+    req.body.month = 13;
+
+    await finalizePayroll(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Invalid month. Must be an integer between 1 and 12",
+    });
+  });
+
+  test("should return 400 if month is a float (5.5)", async () => {
+    req.body.month = 5.5;
+
+    await finalizePayroll(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Invalid month. Must be an integer between 1 and 12",
+    });
+  });
+
+  test("should return 400 if month is 0 (not silently fall back to current month)", async () => {
+    req.body.month = 0;
+
+    await finalizePayroll(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Invalid month. Must be an integer between 1 and 12",
+    });
+  });
+
+  test("should return 400 if month is negative", async () => {
+    req.body.month = -5;
+
+    await finalizePayroll(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Invalid month. Must be an integer between 1 and 12",
+    });
+  });
+
+  test("should return 400 if year is out of range (1999)", async () => {
+    req.body.year = 1999;
+
+    await finalizePayroll(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Invalid year. Must be a valid year integer",
+    });
+  });
+
+  test("should return 400 if year is a float (2024.5)", async () => {
+    req.body.year = 2024.5;
+
+    await finalizePayroll(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Invalid year. Must be a valid year integer",
+    });
+  });
+});

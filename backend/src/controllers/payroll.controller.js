@@ -24,8 +24,8 @@ exports.finalizePayroll = async (req, res) => {
       return res.status(400).json({ message: "No activities to process" });
     }
 
-    let currentMonth = month ? Number(month) : new Date().getMonth() + 1;
-    let currentYear = year ? Number(year) : new Date().getFullYear();
+    let currentMonth = month !== undefined ? Number(month) : new Date().getMonth() + 1;
+    let currentYear = year !== undefined ? Number(year) : new Date().getFullYear();
 
     if (isNaN(currentMonth) || !Number.isInteger(currentMonth) || currentMonth < 1 || currentMonth > 12) {
       return res.status(400).json({ message: "Invalid month. Must be an integer between 1 and 12" });
