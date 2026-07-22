@@ -89,7 +89,10 @@ const DashboardOverview = ({
         </div>
 
         <div className="flex gap-3 w-full sm:w-auto">
-          <button className="flex-1 cursor-pointer sm:flex-none px-5 py-2.5 border border-gray-200 dark:border-slate-800 dark:text-slate-200 rounded-lg text-sm font-semibold hover:shadow dark:hover:bg-slate-800 transition-colors">
+          <button 
+            onClick={() => alert('Detailed PDF & Analytics Reports coming soon!')}
+            className="flex-1 cursor-pointer sm:flex-none px-5 py-2.5 border border-gray-200 dark:border-slate-800 dark:text-slate-200 rounded-lg text-sm font-semibold hover:shadow dark:hover:bg-slate-800 transition-colors"
+          >
             Reports
           </button>
 
