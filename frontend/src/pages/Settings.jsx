@@ -158,6 +158,13 @@ export default function Settings() {
   };
 
   const handlePasswordUpdate = async () => {
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!currentPassword || !newPassword) {
+      return alert("Both current and new password are required.");
+    }
+    if (!passwordRegex.test(newPassword)) {
+      return alert("New password must be at least 8 characters, contain at least one uppercase letter, one number, and one special character.");
+    }
     try {
       await api.patch("/api/auth/security/password", { currentPassword, newPassword });
       alert("Password updated successfully!");
