@@ -58,6 +58,21 @@ describe("Reports Controller - getAnalytics", () => {
     expect(body.roleBreakdown).toEqual([]);
   });
 
+  test("should clamp a negative months query param instead of inverting the date range", async () => {
+    req.query.months = "-3";
+    PayrollUpdate.find.mockReturnValue({ sort: jest.fn().mockResolvedValue([]) });
+    Employee.find.mockResolvedValue([]);
+
+    await getAnalytics(req, res, next);
+
+    const now = new Date();
+    const expectedStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const query = PayrollUpdate.find.mock.calls[0][0];
+
+    expect(query.$or[1].year).toBe(expectedStart.getFullYear());
+    expect(query.$or[1].month.$gte).toBe(expectedStart.getMonth() + 1);
+  });
+
   test("should aggregate monthly trends and role breakdown correctly", async () => {
     const mockPayrolls = [
       {
