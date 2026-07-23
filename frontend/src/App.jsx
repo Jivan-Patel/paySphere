@@ -11,6 +11,7 @@ import ResetPassword from "./pages/ResetPassword"
 import Settings from "./pages/Settings"
 import Reports from "./pages/Reports"
 import NotFound from "./pages/NotFound"
+import ProtectedRoute from "./components/ProtectedRoute"
 import ScrollToTop from "./components/common/ScrollToTop"
 function App() {
   const themeMode = useSelector((state) => state.ui.themeMode);
@@ -47,12 +48,12 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<LoginSignUp />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/monthly-updates" element={<MonthlyUpdates />} />
-          <Route path="/add-employee" element={<AddEmployee />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/monthly-updates" element={<ProtectedRoute><MonthlyUpdates /></ProtectedRoute>} />
+          <Route path="/add-employee" element={<ProtectedRoute><AddEmployee /></ProtectedRoute>} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
 </Routes>
         <ScrollToTop />
