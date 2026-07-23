@@ -43,6 +43,7 @@ function calculateNetSalary(employee, user, adjustments = {}) {
   if (isNaN(netSalary) || !Number.isFinite(netSalary)) {
     netSalary = 0;
   }
+  netSalary = Math.max(0, netSalary);
 
   return {
     baseSalary,
