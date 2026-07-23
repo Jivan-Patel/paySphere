@@ -7,7 +7,7 @@ const Employee = require("../models/employee.model");
 exports.getAnalytics = async (req, res, next) => {
   try {
     const userId = req.userId;
-    const monthsBack = Math.min(parseInt(req.query.months) || 6, 12);
+    const monthsBack = Math.min(Math.max(parseInt(req.query.months) || 6, 1), 12);
 
     // Calculate date range
     const now = new Date();
