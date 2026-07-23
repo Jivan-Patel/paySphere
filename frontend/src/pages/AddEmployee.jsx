@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logout } from "../features/auth/authSlice";
 import ThemeToggle from "../components/ThemeToggle";
 import api from "../services/api";
 
@@ -81,6 +83,7 @@ const Avatar = ({ name, size = 36 }) => {
 
 export default function AddEmployee() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -310,7 +313,7 @@ export default function AddEmployee() {
             </div>
             <button
               onClick={() => {
-                localStorage.removeItem("token");
+                dispatch(logout());
                 localStorage.removeItem("companyName");
                 navigate("/auth");
               }}
