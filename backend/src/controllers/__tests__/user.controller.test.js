@@ -1,8 +1,10 @@
-const { googleAuth } = require('../user.controller');
+const { googleAuth, updatePassword } = require('../user.controller');
 const User = require('../../models/user.model');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 jest.mock('jsonwebtoken');
+jest.mock('bcryptjs');
 jest.mock('google-auth-library', () => {
   return {
     OAuth2Client: jest.fn().mockImplementation(() => {
@@ -28,6 +30,7 @@ jest.mock('../../models/user.model', () => {
     };
   });
   mockConstructor.findOne = jest.fn();
+  mockConstructor.findById = jest.fn();
   return mockConstructor;
 });
 
@@ -84,5 +87,108 @@ describe('Google Authentication Controller tests', () => {
       companyName: 'Test Company',
       message: 'Logged in successfully',
     });
+  });
+});
+
+describe('Update Password Controller tests', () => {
+  let req;
+  let res;
+  let next;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    req = {
+      userId: 'user123',
+      body: {
+        currentPassword: 'OldPass1!',
+        newPassword: 'NewPass1!',
+      },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    next = jest.fn();
+  });
+
+  test('should increment tokenVersion when password is changed', async () => {
+    const mockUser = {
+      _id: 'user123',
+      password: 'hashed_old_password',
+      tokenVersion: 0,
+      save: jest.fn().mockResolvedValue({}),
+    };
+
+    User.findById.mockResolvedValue(mockUser);
+    bcrypt.compare.mockResolvedValue(true);
+    bcrypt.hash.mockResolvedValue('hashed_new_password');
+
+    await updatePassword(req, res, next);
+
+    expect(mockUser.tokenVersion).toBe(1);
+    expect(mockUser.password).toBe('hashed_new_password');
+    expect(mockUser.save).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Password updated successfully' });
+  });
+
+  test('should increment tokenVersion from undefined to 1', async () => {
+    const mockUser = {
+      _id: 'user123',
+      password: 'hashed_old_password',
+      // tokenVersion is undefined (not set)
+      save: jest.fn().mockResolvedValue({}),
+    };
+
+    User.findById.mockResolvedValue(mockUser);
+    bcrypt.compare.mockResolvedValue(true);
+    bcrypt.hash.mockResolvedValue('hashed_new_password');
+
+    await updatePassword(req, res, next);
+
+    expect(mockUser.tokenVersion).toBe(1);
+    expect(mockUser.save).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('should return 404 if user not found', async () => {
+    User.findById.mockResolvedValue(null);
+
+    await updatePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'User not found' });
+  });
+
+  test('should return 400 if current password is incorrect', async () => {
+    const mockUser = {
+      _id: 'user123',
+      password: 'hashed_old_password',
+      tokenVersion: 0,
+      save: jest.fn(),
+    };
+
+    User.findById.mockResolvedValue(mockUser);
+    bcrypt.compare.mockResolvedValue(false);
+
+    await updatePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Incorrect current password' });
+    expect(mockUser.save).not.toHaveBeenCalled();
+  });
+
+  test('should return 400 if user has no password set', async () => {
+    const mockUser = {
+      _id: 'user123',
+      password: null,
+    };
+
+    User.findById.mockResolvedValue(mockUser);
+
+    await updatePassword(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'No password set. Please use password recovery.' });
   });
 });
