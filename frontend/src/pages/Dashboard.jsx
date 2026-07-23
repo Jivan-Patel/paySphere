@@ -1,8 +1,9 @@
 import DownloadIcon from '@mui/icons-material/Download';
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
+import { logout } from '../features/auth/authSlice';
 import ThemeToggle from '../components/ThemeToggle';
 import Sidebar from '../components/Sidebar';
 import EmployeeCard from '../components/EmployeeCard';
@@ -545,6 +546,7 @@ const EditEmployeeModal = ({ employee, onClose, onSave }) => {
 
 export default function PaySphereDashboard() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [activePage, setActivePage] = useState('Dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -723,7 +725,7 @@ export default function PaySphereDashboard() {
             </div>
             <button
               onClick={() => {
-                localStorage.removeItem('token');
+                dispatch(logout());
                 localStorage.removeItem('companyName');
                 navigate('/');
               }}
