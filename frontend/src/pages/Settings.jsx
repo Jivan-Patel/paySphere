@@ -91,6 +91,9 @@ export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
+
   useEffect(() => {
     api.get("/api/auth/settings")
       .then(res => {
@@ -176,8 +179,7 @@ export default function Settings() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("Are you ABSOLUTELY sure you want to permanently delete your account? This action cannot be undone and all data will be lost.")) return;
+  const executeDeleteAccount = async () => {
     try {
       await api.delete("/api/auth/security/account");
       alert("Account successfully deleted.");
@@ -328,7 +330,7 @@ export default function Settings() {
                 <button onClick={() => alert("All other active sessions have been logged out.")} className="px-5 py-2.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-bold transition hover:bg-gray-50 dark:hover:bg-slate-700">
                   Logout All Devices
                 </button>
-                <button onClick={handleDeleteAccount} className="px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold transition hover:bg-red-700">
+                <button onClick={() => setShowDeleteModal(true)} className="px-5 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold transition hover:bg-red-700">
                   Delete Account
                 </button>
               </div>
@@ -730,6 +732,56 @@ export default function Settings() {
           </div>
         </main>
       </div>
+
+      {/* ── Delete Account Modal ── */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-red-100 dark:border-red-900/30 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600 dark:text-red-500"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <h3 className="text-xl font-bold text-center text-gray-900 dark:text-white mb-2">Are you absolutely sure?</h3>
+              <p className="text-sm text-center text-gray-500 dark:text-slate-400 mb-6">
+                This action cannot be undone. This will permanently delete your account, your company's payroll data, and all employee records.
+              </p>
+              
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-gray-500 dark:text-slate-400 tracking-wider">
+                  Type <span className="text-red-600 dark:text-red-500 select-all">DELETE</span> to confirm
+                </label>
+                <input 
+                  type="text" 
+                  value={deleteConfirmationText} 
+                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                  placeholder="DELETE"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none text-sm text-gray-900 dark:text-white transition"
+                />
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 dark:bg-slate-800/50 px-6 py-4 flex gap-3 justify-end">
+              <button 
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmationText("");
+                }} 
+                className="px-5 py-2.5 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-bold transition hover:bg-gray-50 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDeleteAccount}
+                disabled={deleteConfirmationText !== "DELETE"}
+                className={`px-5 py-2.5 rounded-lg text-sm font-bold transition ${deleteConfirmationText === "DELETE" ? "bg-red-600 hover:bg-red-700 text-white" : "bg-red-300 dark:bg-red-900/50 text-white/70 cursor-not-allowed"}`}
+              >
+                Permanently Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
