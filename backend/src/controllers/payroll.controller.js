@@ -67,6 +67,11 @@ exports.finalizePayroll = async (req, res, next) => {
         continue;
       }
 
+      if (!employee.isActive) {
+        errors.push(`Employee ${employee.fullName} is inactive and cannot be included in payroll`);
+        continue;
+      }
+
       let leaveDays = 0, overtimeHours = 0, bonus = 0, deductions = 0;
 
       const tagsList = Array.isArray(act.tags) ? act.tags : [];
@@ -131,12 +136,8 @@ exports.finalizePayroll = async (req, res, next) => {
       session = null;
     }
 
-    // Phase 2: Write all calculated records atomically within transaction
-    const results = [];
-    const writeOptions = { upsert: true, new: true, setDefaultsOnInsert: true };
-    if (session) writeOptions.session = session;
-
-    for (const item of preparedItems) {
+    // Phase 2: Write all calculated records atomically within transaction using bulkWrite
+    const bulkOps = preparedItems.map((item) => {
       const payrollData = {
         employeeId: item.employee._id,
         employeeName: item.employee.fullName,
@@ -155,25 +156,53 @@ exports.finalizePayroll = async (req, res, next) => {
         status: "finalized",
       };
 
-      const payroll = await PayrollUpdate.findOneAndUpdate(
-        { employeeId: item.employee._id, month: currentMonth, year: currentYear, createdBy: req.userId },
-        payrollData,
-        writeOptions
-      );
+      return {
+        updateOne: {
+          filter: {
+            employeeId: item.employee._id,
+            month: currentMonth,
+            year: currentYear,
+            createdBy: req.userId,
+          },
+          update: { $set: payrollData },
+          upsert: true,
+        },
+      };
+    });
 
-      results.push({
-        employeeName: item.employee.fullName,
-        baseSalary: item.baseSalary,
-        leaveDays: item.leaveDays,
-        leaveDeduction: item.leaveDeduction,
-        overtimeHours: item.overtimeHours,
-        overtimePay: item.overtimePay,
-        bonus: item.bonus,
-        deductions: item.deductions,
-        netSalary: item.netSalary,
-        payrollId: payroll._id,
-      });
-    }
+    const bulkWriteOptions = session ? { session } : {};
+    await PayrollUpdate.bulkWrite(bulkOps, bulkWriteOptions);
+
+    // Phase 3: Fetch updated payrolls to construct response
+    const fetchOptions = session ? { session } : {};
+    const updatedPayrolls = await PayrollUpdate.find(
+      {
+        createdBy: req.userId,
+        month: currentMonth,
+        year: currentYear,
+        employeeId: { $in: preparedItems.map((item) => item.employee._id) },
+      },
+      null,
+      fetchOptions
+    );
+
+    const payrollMap = {};
+    updatedPayrolls.forEach((p) => {
+      payrollMap[p.employeeId.toString()] = p._id;
+    });
+
+    const results = preparedItems.map((item) => ({
+      employeeName: item.employee.fullName,
+      baseSalary: item.baseSalary,
+      leaveDays: item.leaveDays,
+      leaveDeduction: item.leaveDeduction,
+      overtimeHours: item.overtimeHours,
+      overtimePay: item.overtimePay,
+      bonus: item.bonus,
+      deductions: item.deductions,
+      netSalary: item.netSalary,
+      payrollId: payrollMap[item.employee._id.toString()],
+    }));
 
     if (session) {
       await session.commitTransaction();
