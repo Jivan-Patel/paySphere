@@ -101,7 +101,7 @@ export default function AttendanceCalendarModal({ isOpen, onClose, employee, onA
     if (selectedDayForOt) {
       setDayStates((prev) => ({
         ...prev,
-        [selectedDayForOt]: { status: "OVERTIME", otHours: Math.max(0.5, parseFloat(otInput) || 0) },
+        [selectedDayForOt]: { status: "OVERTIME", otHours: Math.min(24, Math.max(0.5, parseFloat(otInput) || 0)) },
       }));
       setSelectedDayForOt(null);
     }
