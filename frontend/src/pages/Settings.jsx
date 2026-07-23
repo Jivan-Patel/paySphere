@@ -3,6 +3,7 @@ import api from "../services/api";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { logout } from "../features/auth/authSlice";
 import { setThemeMode } from "../features/ui/uiSlice";
 import ThemeToggle from "../components/ThemeToggle";
 
@@ -687,7 +688,7 @@ export default function Settings() {
             </div>
             <button
               onClick={() => {
-                localStorage.removeItem("token");
+                dispatch(logout());
                 localStorage.removeItem("companyName");
                 navigate("/auth");
               }}
