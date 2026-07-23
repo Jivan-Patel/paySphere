@@ -178,8 +178,8 @@ export default function AddEmployee() {
     const salaryNum = parseFloat(monthlySalary.replace(/,/g, ""));
     const otNum = overtimeRate ? parseFloat(overtimeRate.replace(/,/g, "")) : undefined;
 
-    if (isNaN(salaryNum)) {
-      setError("Please enter a valid salary amount.");
+    if (isNaN(salaryNum) || salaryNum <= 0) {
+      setError("Monthly salary must be a positive number.");
       setLoading(false);
       return;
     }
