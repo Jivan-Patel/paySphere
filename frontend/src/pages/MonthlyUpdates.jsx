@@ -185,6 +185,9 @@ export default function MonthlyUpdates() {
   const [emailStatuses, setEmailStatuses] = useState({});
   const [bulkEmailMsg, setBulkEmailMsg] = useState("");
 
+  // Copy Payroll Summary state (#184)
+  const [copiedSummary, setCopiedSummary] = useState(false);
+
   const companyName = localStorage.getItem("companyName") || "Acme Corp";
   const token = localStorage.getItem("token");
 
@@ -294,6 +297,39 @@ export default function MonthlyUpdates() {
     } finally {
       setSendingBulkEmail(false);
     }
+  };
+
+  // Handle Copy Payroll Summary to Clipboard (#184)
+  const handleCopySummary = () => {
+    if (!payrollResults || !payrollResults.results) return;
+    const now = new Date();
+    const monthName = now.toLocaleString("default", { month: "long" });
+    const year = now.getFullYear();
+    const totalPayout = payrollResults.results.reduce((sum, r) => sum + (r.netSalary || 0), 0);
+
+    let summaryText = `💰 PaySphere Payroll Summary (${monthName} ${year})\n`;
+    summaryText += `-----------------------------------\n`;
+    summaryText += `👥 Total Employees: ${payrollResults.results.length}\n`;
+    summaryText += `💵 Total Payout: ${fmt(totalPayout)}\n`;
+    summaryText += `-----------------------------------\n`;
+
+    payrollResults.results.forEach((r) => {
+      summaryText += `• ${r.employeeName}: ${fmt(r.netSalary)}\n`;
+    });
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(summaryText);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = summaryText;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+
+    setCopiedSummary(true);
+    setTimeout(() => setCopiedSummary(false), 2000);
   };
 
   return (
@@ -861,6 +897,19 @@ export default function MonthlyUpdates() {
                     }}
                   >
                     {sendingBulkEmail ? "Sending Emails... ⏳" : "📧 Email All Payslips"}
+                  </button>
+                  <button
+                    onClick={handleCopySummary}
+                    style={{
+                      padding:"11px 20px", borderRadius:10,
+                      border: isDark ? "1.5px solid #10B981" : "1.5px solid #059669",
+                      background: copiedSummary ? (isDark ? "#064E3B" : "#ECFDF5") : (isDark ? "#1e293b" : "white"),
+                      fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:700,
+                      color: isDark ? "#A7F3D0" : "#059669", cursor:"pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {copiedSummary ? "Copied to Clipboard! ✅" : "📋 Copy Summary"}
                   </button>
                   <button
                     onClick={() => { const now = new Date(); fetch(`/api/payroll/export-csv?month=${now.getMonth()+1}&year=${now.getFullYear()}`, { headers: { Authorization: `Bearer ${token}` } }).then(r=>r.ok?r.blob():null).then(b=>{if(!b){alert('No data to export');return;}const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`payroll-${now.getMonth()+1}-${now.getFullYear()}.csv`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}).catch(()=>alert('Export failed.')); }}
