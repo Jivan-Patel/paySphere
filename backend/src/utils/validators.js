@@ -21,10 +21,14 @@ const isNonNegativeNumber = (val) => typeof val === "number" && !isNaN(val) && N
 // Sanitize string to prevent object injection
 const sanitizeString = (val) => (typeof val === "string" ? val.trim() : "");
 
+// Escape regex special characters to prevent ReDoS attacks
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 module.exports = {
   isNonEmptyString,
   isValidEmail,
   isPositiveNumber,
   isNonNegativeNumber,
   sanitizeString,
+  escapeRegex,
 };

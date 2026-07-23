@@ -1,7 +1,7 @@
 const Employee = require("../models/employee.model");
 const User = require("../models/user.model");
 const { parse } = require("csv-parse");
-const { isNonEmptyString } = require("../utils/validators");
+const { isNonEmptyString, escapeRegex } = require("../utils/validators");
 const PayrollUpdate = require("../models/payroll.model");
 // ADD EMPLOYEE
 exports.addEmployee = async (req, res, next) => {
@@ -57,9 +57,6 @@ exports.getEmployees = async (req, res, next) => {
     let search = req.query.search;
     if (typeof search !== "string") search = "";
     search = search.trim();
-
-    // Escape regex special characters to prevent ReDoS attacks (#121)
-    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const skip = (page - 1) * limit;
 
