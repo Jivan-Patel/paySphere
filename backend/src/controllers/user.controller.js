@@ -178,6 +178,14 @@ exports.updatePassword = async (req, res, next) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    if (!isNonEmptyString(currentPassword) || !isNonEmptyString(newPassword)) {
+      return res.status(400).json({ message: "Current password and new password are required" });
+    }
+
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({ message: "Password must be at least 8 characters, contain at least one uppercase letter, one number, and one special character" });
+    }
+
     if (!user.password) {
       return res.status(400).json({ message: "No password set. Please use password recovery." });
     }
