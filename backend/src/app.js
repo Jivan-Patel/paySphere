@@ -12,7 +12,7 @@ const app = express();
 const errorHandler = require("./middlewares/error.middleware");
 
 // Security headers
-app.use(helmet());
+app.use(helmet({ crossOriginOpenerPolicy: false }));
 
 // Rate limiting trust proxy configuration
 app.set("trust proxy", 1);
