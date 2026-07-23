@@ -255,11 +255,11 @@ exports.updateEmployee = async (req, res, next) => {
     }
 
     // Validate fields if provided
-    if (monthlySalary !== undefined && (isNaN(monthlySalary) || monthlySalary <= 0)) {
+    if (monthlySalary !== undefined && (isNaN(monthlySalary) || !Number.isFinite(Number(monthlySalary)) || monthlySalary <= 0)) {
       return res.status(400).json({ message: "Monthly salary must be a positive number" });
     }
 
-    if (overtimeRate !== undefined && (isNaN(overtimeRate) || overtimeRate < 0)) {
+    if (overtimeRate !== undefined && (isNaN(overtimeRate) || !Number.isFinite(Number(overtimeRate)) || overtimeRate < 0)) {
       return res.status(400).json({ message: "Overtime rate must be a non-negative number" });
     }
 
