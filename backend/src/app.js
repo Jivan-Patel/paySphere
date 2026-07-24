@@ -2,12 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const multer = require("multer");
+const cookieParser = require("cookie-parser");
 const userRoutes = require("./routes/user.routes");
 const employeeRoutes = require("./routes/employee.routes");
 const payrollRoutes = require("./routes/payroll.routes");
 const reportsRoutes = require("./routes/reports.routes");
 
 const app = express();
+app.use(cookieParser());
 
 const errorHandler = require("./middlewares/error.middleware");
 
