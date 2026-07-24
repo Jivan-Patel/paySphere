@@ -341,6 +341,26 @@ export default function MonthlyUpdates() {
     setTimeout(() => setCopiedSummary(false), 2000);
   };
 
+  const handleExportCsv = async () => {
+    try {
+      const now = new Date();
+      const response = await api.get(`/api/payroll/export-csv?month=${now.getMonth() + 1}&year=${now.getFullYear()}`, {
+        responseType: 'blob',
+      });
+      const blob = response.data;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `payroll-${now.getMonth() + 1}-${now.getFullYear()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('No data to export');
+    }
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: isDark ? "#090d16" : "#F3F4F6", fontFamily: "'DM Sans','Segoe UI',sans-serif", display: "flex", overflowX: "hidden", transition: "background 0.2s" }}>
       <Helmet>
@@ -921,7 +941,7 @@ export default function MonthlyUpdates() {
                     {copiedSummary ? "Copied to Clipboard! ✅" : "📋 Copy Summary"}
                   </button>
                   <button
-                    onClick={() => { const now = new Date(); fetch(`/api/payroll/export-csv?month=${now.getMonth()+1}&year=${now.getFullYear()}`, { headers: { Authorization: `Bearer ${token}` } }).then(r=>r.ok?r.blob():null).then(b=>{if(!b){alert('No data to export');return;}const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`payroll-${now.getMonth()+1}-${now.getFullYear()}.csv`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}).catch(()=>alert('Export failed.')); }}
+                    onClick={handleExportCsv}
                     style={{
                       padding:"11px 20px", borderRadius:10,
                       border: isDark ? "1.5px solid #334155" : "1.5px solid #E5E7EB", background: isDark ? "#1e293b" : "white",
