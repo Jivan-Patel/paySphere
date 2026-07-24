@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../features/auth/authSlice";
+import { logout, logoutUser } from "../features/auth/authSlice";
 import ThemeToggle from "../components/ThemeToggle";
 import api from "../services/api";
 import AttendanceCalendarModal from "../components/AttendanceCalendarModal";
@@ -537,7 +537,7 @@ export default function MonthlyUpdates() {
             </div>
             <button
               onClick={() => {
-                dispatch(logout());
+                dispatch(logoutUser());
                 localStorage.removeItem("companyName");
                 navigate("/auth");
               }}
